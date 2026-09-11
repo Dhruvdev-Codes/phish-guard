@@ -37,14 +37,13 @@ A client-side web application that uses AI to detect phishing and social-enginee
 
 ```
 phish-guard/
-├── README.md
-├── .gitignore
-├── .github/workflows/
-│   └── pages.yml       — GitHub Actions Pages deployment
-└── phish-guard-app/
-    ├── index.html   — Page structure & UI
-    ├── style.css    — Dark cybersecurity theme
-    └── app.js       — Core analysis logic
+├── index.html          — Page structure & UI (served at root)
+├── style.css           — Dark cybersecurity theme
+├── app.js              — Core analysis logic
+├── README.md           — Project documentation
+├── .gitignore          — Git ignore configuration
+└── .github/workflows/
+    └── pages.yml       — GitHub Actions Pages deployment
 ```
 
 ### How It Works
