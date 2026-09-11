@@ -1,8 +1,8 @@
 ﻿# Phish-Guard 🛡️
 
-**AI & Heuristic Social Engineering Analyzer**
+**AI & Cognitive Social Engineering Analyzer & Security Awareness Lab**
 
-A modern client-side cybersecurity web application designed to detect phishing, spear-phishing, smishing, and business email compromise (BEC) attacks. Built as a B.Tech 4th-year Cybersecurity & AI capstone project.
+A modern client-side cybersecurity web application designed to detect phishing, spear-phishing, smishing, and business email compromise (BEC) attacks, while providing an interactive security awareness training simulator.
 
 ## 🌐 Live Application
 
@@ -12,13 +12,19 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 
 ## ✨ Key Features
 
-- **Dual-Engine Detection Architecture:**
-  - 🤖 **Neural AI Engine (OpenAI GPT-4o-mini):** Deep semantic and social-engineering reasoning, MITRE ATT&CK technique categorization.
-  - ⚡ **Local Heuristic Engine (Offline / Zero-API-Key Mode):** Built-in rule-based cybersecurity engine detecting urgency patterns, fear appeals, IP-based URLs, brand spoofing, and abused high-risk TLDs immediately without requiring an API key.
-- **⚡ Quick Test Samples:** One-click presets for Bank Alert Scams, CEO Gift Card BEC, Package Smishing, IT Password Expiry, and Clean Meeting Invites for instant demonstration.
-- **🛡️ MITRE ATT&CK & Tactic Tagging:** Automatic mapping to MITRE ATT&CK (e.g. `T1566: Phishing`, `T1566.002: Spearphishing Link`, `T1598: Phishing for Information`).
-- **🔍 VirusTotal Threat Intelligence:** Live reputation scanning for extracted URLs and malicious domains.
-- **📊 Incident Report Export:** One-click export to Markdown (`.md`) or structured JSON (`.json`) for incident triage and documentation.
+- **Multi-Model Detection Architecture:**
+  - 🤖 **Google Gemini 1.5 Flash (Free Tier BYOK):** Fast, high-capacity neural social engineering & cognitive manipulation analysis.
+  - 🤖 **OpenAI GPT-4o-mini:** Structured JSON threat modeling & MITRE ATT&CK categorization.
+  - ⚡ **Local Cognitive Heuristic Engine (Zero-Key Offline Mode):** Built-in cybersecurity engine analyzing urgency, fear, authority pressure, brand spoofing, IP URLs, and risky TLDs without external API calls.
+- **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
+- **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
+- **🎯 Interactive Security Awareness Lab (Simulator):**
+  - Hands-on phishing identification training with instant feedback, psychological breakdown, and red/green flags.
+  - ✨ **AI Scenario Generator:** Generates fresh, modern enterprise scenarios (quishing, vishing follow-ups, invoice fraud, SaaS consent phishing) using Gemini or OpenAI.
+- **⚡ Quick Test Presets:** One-click presets for Bank Alert Scams, CEO Gift Card BEC, Package Smishing, IT Password Expiry, Payroll Bonus lures, and Clean Meeting Invites.
+- **🛡️ MITRE ATT&CK Tagging:** Automated mapping to techniques (`T1566: Phishing`, `T1566.002: Spearphishing Link`, `T1598: Phishing for Information`).
+- **🔍 VirusTotal Threat Intelligence:** Live reputation checks for extracted URLs and malicious domains.
+- **📊 Incident Report Export:** One-click export to Markdown (`.md`) or structured JSON (`.json`) for incident triage.
 - **🔒 Privacy-First BYOK Model:** Zero telemetry. API keys reside exclusively in browser memory and are wiped automatically on tab exit.
 
 ---
@@ -26,12 +32,14 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 ## 🚀 Quick Start
 
 1. Visit **[https://dhruvdev-codes.github.io/phish-guard/](https://dhruvdev-codes.github.io/phish-guard/)** (or open `index.html` locally).
-2. Choose one of the **⚡ Quick Test Samples** or paste your own message.
-3. Click **🔍 Analyze Threats**.
-   - *Default (No Key):* Runs the instantaneous Local Heuristic Engine.
-   - *Optional:* Click **⚙️ API Configuration** to enter an OpenAI or VirusTotal key for deep AI analysis.
-4. Review the risk score gauge, detected tactics, extracted URLs, and recommended mitigation actions.
-5. Click **📋 Copy Incident Report** or **📥 Download JSON** to save findings.
+2. **Analyzer Tab:**
+   - Choose one of the **⚡ Quick Test Samples** or paste any email/SMS.
+   - Select your provider (**Google Gemini**, **OpenAI**, or **Built-in Heuristic Engine**).
+   - Click **🔍 Analyze Threats** to view risk score gauge, psychological breakdown, plain-English summary, and indicators.
+3. **Simulator Tab:**
+   - Step through the interactive scenarios and decide if each is Phishing or Safe.
+   - Click **✨ AI-Generated Challenge** to generate a dynamic modern scenario on the fly.
+4. Export reports with **📋 Copy Incident Report** or **📥 Download JSON**.
 
 ---
 
@@ -39,8 +47,9 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 
 | Provider | Purpose | Status | Endpoint |
 |---|---|---|---|
-| **Built-in Heuristic** | Fast regex & semantic indicator scoring | Always Active | Local Browser Engine |
-| **OpenAI** | GPT-4o-mini deep NLP threat reasoning | Optional (BYOK) | `api.openai.com/v1` |
+| **Built-in Heuristic** | Fast regex & semantic cognitive scoring | Always Active | Local Browser Engine |
+| **Google Gemini** | Gemini 1.5 Flash deep NLP reasoning | Free Tier (BYOK) | `generativelanguage.googleapis.com` |
+| **OpenAI** | GPT-4o-mini deep NLP reasoning | Optional (BYOK) | `api.openai.com/v1` |
 | **VirusTotal** | Real-time URL threat reputation | Optional (BYOK) | `virustotal.com/api/v3` |
 
 > 🔒 **Zero-Persistence Guarantee:** Keys are never stored in `localStorage`, cookies, or sent to any custom server.
@@ -51,10 +60,10 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 
 ```
 phish-guard/
-├── index.html              # Main application UI & sample selector
+├── index.html              # Main application UI, tabs & simulator cards
 ├── style.css               # Cybersecurity dark theme & responsive UI
-├── app.js                  # Dual-engine analysis, heuristics, API handlers
-├── README.md               # Project documentation & capstone specifications
+├── app.js                  # Multi-model AI, cognitive heuristics, simulator lab
+├── README.md               # Project documentation & architecture specifications
 ├── .github/workflows/
 │   └── pages.yml           # Automated CI/CD deployment to GitHub Pages
 └── phish-guard-app/        # Production bundle mirror
@@ -64,19 +73,18 @@ phish-guard/
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Semantic HTML5, Vanilla CSS3 (Custom Dark Cyberpunk Theme), Modern Vanilla JavaScript (ES2022)
-- **AI & NLP:** OpenAI GPT-4o-mini Chat Completions API with structured JSON output
+- **Frontend:** Semantic HTML5, Vanilla CSS3 (Dark Theme), Modern Vanilla JavaScript (ES2022)
+- **AI & NLP:** Google Gemini 1.5 Flash & OpenAI GPT-4o-mini with structured JSON output
 - **Threat Intelligence:** VirusTotal API v3 (via CORS-enabled proxy)
 - **Hosting & CI/CD:** GitHub Actions & GitHub Pages
 - **Security:** BYOK Architecture with ephemeral in-memory state
 
 ---
 
-## 🎓 Academic Capstone Context
+## 🛡️ Focus & Research Areas
 
-- **Degree:** Bachelor of Technology (B.Tech) - 4th Year
 - **Domain:** Cybersecurity & Applied Artificial Intelligence
-- **Focus Areas:** Social Engineering Defense, MITRE ATT&CK Framework, Client-side Threat Analysis, Explainable Threat Scoring.
+- **Focus Areas:** Social Engineering Defense, Cognitive Bias Exploitation, MITRE ATT&CK Framework, Client-side Threat Analysis, Explainable AI Threat Scoring.
 
 ---
 

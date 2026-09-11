@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phish-Guard | AI-Powered Phishing Analyzer</title>
+    <title>Phish-Guard | AI & Cognitive Social Engineering Analyzer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,72 +13,165 @@
         <header class="header">
             <div class="logo">🛡️</div>
             <h1>Phish-Guard</h1>
-            <p class="tagline">AI & Heuristic Social Engineering Analyzer</p>
+            <p class="tagline">AI &amp; Cognitive Social Engineering Intelligence Platform</p>
         </header>
 
-        <!-- ===== API KEYS (collapsible) ===== -->
-        <section class="card">
-            <button id="keyToggle" class="key-toggle" aria-expanded="false">
-                ⚙️ API Configuration <span class="badge-optional">Optional for Local Mode</span> <span class="arrow">▼</span>
+        <!-- ===== MODE NAVIGATION TABS ===== -->
+        <nav class="nav-tabs">
+            <button type="button" class="tab-btn active" data-tab="analyzerTab" id="tabAnalyzerBtn">
+                <span class="tab-icon">🔍</span> Threat &amp; Psych Analyzer
             </button>
-            <div id="keyPanel" class="key-panel collapsed">
-                <div class="key-row">
-                    <div class="key-group">
-                        <label for="openaiKey">OpenAI API Key <span class="opt">(for GPT-4o-mini AI Scan)</span></label>
-                        <input type="password" id="openaiKey" placeholder="sk-..." autocomplete="off">
-                        <small>Powers deep semantic AI analysis. If omitted, built-in Heuristic Engine is used.</small>
+            <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
+                <span class="tab-icon">🎯</span> Security Awareness Lab
+            </button>
+        </nav>
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: LIVE THREAT ANALYZER                              -->
+        <!-- ========================================================= -->
+        <div id="analyzerTab" class="tab-content active">
+
+            <!-- ===== API KEYS (collapsible) ===== -->
+            <section class="card">
+                <button id="keyToggle" class="key-toggle" aria-expanded="false">
+                    ⚙️ AI &amp; Threat Intelligence Engine <span class="badge-optional">Zero-Key Local Mode Ready</span> <span class="arrow">▼</span>
+                </button>
+                <div id="keyPanel" class="key-panel collapsed">
+                    <div class="key-row">
+                        <div class="key-group">
+                            <label for="aiProvider">AI Engine Provider</label>
+                            <select id="aiProvider" class="select-input">
+                                <option value="gemini">Google Gemini 1.5 Flash (Free Tier Recommended)</option>
+                                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                                <option value="heuristic">Built-in Heuristic Engine (Zero-Key Offline)</option>
+                            </select>
+                            <small>Select your AI provider or use the offline heuristic analyzer.</small>
+                        </div>
+                        <div class="key-group">
+                            <label for="apiKeyInput" id="apiKeyLabel">Google Gemini API Key <span class="opt">(Free Tier)</span></label>
+                            <input type="password" id="apiKeyInput" placeholder="Enter Gemini or OpenAI API key..." autocomplete="off">
+                            <small id="apiKeyHint">Free key from Google AI Studio: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a></small>
+                        </div>
                     </div>
-                    <div class="key-group">
-                        <label for="vtKey">VirusTotal API Key <span class="opt">(optional)</span></label>
-                        <input type="password" id="vtKey" placeholder="Enter VT key..." autocomplete="off">
-                        <small>Enables real-time URL reputation & threat feed scanning.</small>
+                    <div class="key-row" style="margin-top: 12px;">
+                        <div class="key-group" style="grid-column: 1 / -1;">
+                            <label for="vtKey">VirusTotal API Key <span class="opt">(Optional - Real-time Threat Intelligence)</span></label>
+                            <input type="password" id="vtKey" placeholder="Enter VT key..." autocomplete="off">
+                            <small>Enables global multi-engine URL reputation lookups.</small>
+                        </div>
+                    </div>
+                    <div class="security-note">
+                        🔒 <strong>Privacy Guarantee:</strong> Keys remain strictly in volatile browser memory. They are never saved to disk, localStorage, cookies, or transmitted to any backend server.
                     </div>
                 </div>
-                <div class="security-note">
-                    🔒 <strong>Privacy Guarantee:</strong> Keys are kept in browser memory only. They are never saved to disk, localStorage, cookies, or any backend server.
+            </section>
+
+            <!-- ===== SAMPLE SELECTOR ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Quick Test Scenarios:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample" data-sample="bank">🏦 Bank Urgency Scam</button>
+                    <button type="button" class="btn-sample" data-sample="ceo">👔 CEO Whaling (BEC)</button>
+                    <button type="button" class="btn-sample" data-sample="package">📦 Package Smishing</button>
+                    <button type="button" class="btn-sample" data-sample="creds">🔐 Password Expiry</button>
+                    <button type="button" class="btn-sample" data-sample="payroll">💰 HR Payroll Bait</button>
+                    <button type="button" class="btn-sample" data-sample="legit">✅ Clean Meeting Invite</button>
                 </div>
             </div>
-        </section>
 
-        <!-- ===== SAMPLE SELECTOR ===== -->
-        <div class="samples-card">
-            <span class="samples-title">⚡ Quick Test Samples:</span>
-            <div class="sample-buttons">
-                <button type="button" class="btn-sample" data-sample="bank">🏦 Bank Urgency Scam</button>
-                <button type="button" class="btn-sample" data-sample="ceo">👔 CEO Spear Phish</button>
-                <button type="button" class="btn-sample" data-sample="package">📦 Package Smishing</button>
-                <button type="button" class="btn-sample" data-sample="creds">🔐 Password Expiry</button>
-                <button type="button" class="btn-sample" data-sample="legit">✅ Clean Meeting Invite</button>
+            <!-- ===== MESSAGE INPUT ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="messageInput" class="card-label">Suspicious Message Content</label>
+                    <button type="button" id="clearBtn" class="btn-link">Clear</button>
+                </div>
+                <textarea id="messageInput" rows="8"
+                    placeholder="Paste an email, SMS, or direct message here, or click a Quick Test Scenario above..."></textarea>
+            </section>
+
+            <!-- ===== SCAN BUTTON ===== -->
+            <button id="scanButton" class="btn-scan">
+                <span class="btn-icon">🔍</span> Analyze Threat &amp; Psychological Triggers
+            </button>
+
+            <!-- ===== LOADING / STATUS ===== -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <span id="statusText">Initializing analyzer…</span>
             </div>
+
+            <!-- ===== RESULTS ===== -->
+            <div id="resultArea" class="result-area"></div>
         </div>
 
-        <!-- ===== MESSAGE INPUT ===== -->
-        <section class="card">
-            <div class="card-header-flex">
-                <label for="messageInput" class="card-label">Suspicious Message Content</label>
-                <button type="button" id="clearBtn" class="btn-link">Clear</button>
-            </div>
-            <textarea id="messageInput" rows="9"
-                placeholder="Paste an email, SMS, or direct message here, or click a Quick Test Sample above..."></textarea>
-        </section>
+        <!-- ========================================================= -->
+        <!-- TAB 2: SECURITY AWARENESS LAB (SIMULATOR)                 -->
+        <!-- ========================================================= -->
+        <div id="simulatorTab" class="tab-content">
+            <section class="card sim-intro-card">
+                <div class="sim-header">
+                    <h2>🎯 Interactive Phishing &amp; Cognitive Bias Lab</h2>
+                    <p>Evaluate realistic enterprise lures, detect psychological traps, and sharpen your security instincts.</p>
+                </div>
+                
+                <div class="sim-stats-bar">
+                    <div class="stat-box">
+                        <span class="stat-label">Scenario</span>
+                        <span id="simCurrentIndex" class="stat-value">1 / 6</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Awareness Score</span>
+                        <span id="simScore" class="stat-value">0%</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Accuracy</span>
+                        <span id="simScoreRatio" class="stat-value">0 / 0</span>
+                    </div>
+                </div>
+                <div class="sim-tools-row">
+                    <button type="button" class="btn-sim-tool" id="btnGenerateChallenge">✨ AI-Generated Challenge</button>
+                    <button type="button" class="btn-sim-tool btn-sim-tool-ghost" id="btnResetSimulator">🔄 Reset Progress</button>
+                </div>
+            </section>
 
-        <!-- ===== SCAN BUTTON ===== -->
-        <button id="scanButton" class="btn-scan">
-            <span class="btn-icon">🔍</span> Analyze Threats
-        </button>
+            <!-- SIMULATOR SCENARIO CARD -->
+            <section class="card sim-scenario-card" id="simScenarioCard">
+                <div class="sim-meta-header">
+                    <span id="simScenarioCategory" class="sim-badge">Executive Whaling</span>
+                    <span id="simScenarioDifficulty" class="sim-diff-badge diff-med">Intermediate</span>
+                </div>
 
-        <!-- ===== LOADING / STATUS ===== -->
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <span id="statusText">Initializing analyzer…</span>
+                <div class="sim-email-container">
+                    <div class="sim-email-header">
+                        <div class="sim-field"><span class="sim-field-label">From:</span> <span id="simFrom" class="sim-field-val"></span></div>
+                        <div class="sim-field"><span class="sim-field-label">Subject:</span> <span id="simSubject" class="sim-field-val"></span></div>
+                    </div>
+                    <div class="sim-email-body" id="simBody"></div>
+                </div>
+
+                <div class="sim-action-area" id="simDecisionArea">
+                    <p class="sim-prompt-text">What is your verdict on this message?</p>
+                    <div class="sim-button-group">
+                        <button type="button" class="btn-sim btn-sim-phish" id="btnJudgePhish">
+                            🚨 Flag as Phishing Attack
+                        </button>
+                        <button type="button" class="btn-sim btn-sim-safe" id="btnJudgeSafe">
+                            ✅ Mark as Legitimate Communication
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SIMULATOR FEEDBACK AREA -->
+                <div id="simFeedbackArea" class="sim-feedback-area hidden"></div>
+
+                <div class="sim-nav-controls">
+                    <button type="button" class="btn-sim-nav" id="btnPrevSim">← Previous Scenario</button>
+                    <button type="button" class="btn-sim-nav" id="btnNextSim">Next Scenario →</button>
+                </div>
+            </section>
         </div>
-
-        <!-- ===== RESULTS ===== -->
-        <div id="resultArea" class="result-area"></div>
-
-        <!-- ===== FOOTER ===== -->
         <footer class="footer">
-            <p><strong>Phish-Guard</strong> — B.Tech 4th-Year Cybersecurity &amp; AI Capstone Project</p>
+            <p><strong>Phish-Guard</strong> — Cybersecurity &amp; AI Platform</p>
             <p>
                 <a href="https://github.com/Dhruvdev-Codes/phish-guard" target="_blank" rel="noopener">
                     GitHub Repository
