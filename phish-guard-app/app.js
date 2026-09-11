@@ -125,6 +125,17 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     };
 
     // ================================================================
+    //  URL / QUISHING SAMPLE PRESETS
+    // ================================================================
+    const URL_SAMPLES = {
+        punycode: "https://xn--pypal-4ve.com/signin/webapps/mpp/home?country.x=US",
+        stackedSubdomains: "https://login.microsoftonline.com.corporate-gateway-auth.cfd/oauth2/authorize?client_id=4345a&response_type=code&prompt=login",
+        openRedirect: "https://www.google.com/url?q=https://malicious-credential-harvest.top/auth/verify&source=gmail&ust=1726000000",
+        hexIp: "http://0x7f000001/usps/redelivery/confirm.php?tracking=US991823",
+        cleanPortal: "https://security.microsoft.com/homepage?tid=72f988bf-86f1-41af-91ab-2d7cd011db47"
+    };
+
+    // ================================================================
     //  SIMULATOR SCENARIOS
     // ================================================================
     const SIM_SCENARIOS = [
@@ -308,6 +319,21 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
         btnNextSim:            $('#btnNextSim'),
         btnGenerateChallenge:  $('#btnGenerateChallenge'),
         btnResetSimulator:     $('#btnResetSimulator'),
+
+        // -- QR & Deep URL Sandbox --
+        urlInput:              $('#urlInput'),
+        analyzeUrlBtn:         $('#analyzeUrlBtn'),
+        clearUrlBtn:           $('#clearUrlBtn'),
+        urlLoading:            $('#urlLoading'),
+        urlStatusText:         $('#urlStatusText'),
+        urlResultArea:         $('#urlResultArea'),
+        urlSampleBtns:         $$('.btn-url-sample'),
+        qrDropZone:            $('#qrDropZone'),
+        qrFileInput:           $('#qrFileInput'),
+        qrPreviewArea:         $('#qrPreviewArea'),
+        qrPreviewImg:          $('#qrPreviewImg'),
+        qrDecodedPayload:      $('#qrDecodedPayload'),
+        qrDropPrompt:          $('#qrDropPrompt'),
     };
 
     // ================================================================
@@ -360,6 +386,34 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
             }
         });
     });
+
+    // Wire URL / Quishing events & presets
+    if (dom.analyzeUrlBtn) {
+        dom.analyzeUrlBtn.addEventListener('click', handleUrlScan);
+    }
+    if (dom.clearUrlBtn) {
+        dom.clearUrlBtn.addEventListener('click', () => {
+            if (dom.urlInput) dom.urlInput.value = '';
+            if (dom.qrPreviewArea) dom.qrPreviewArea.classList.add('hidden');
+            if (dom.qrDropPrompt) dom.qrDropPrompt.classList.remove('hidden');
+            clearUrlResults();
+            if (dom.urlInput) dom.urlInput.focus();
+        });
+    }
+    dom.urlSampleBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.sample;
+            if (URL_SAMPLES[key] && dom.urlInput) {
+                dom.urlInput.value = URL_SAMPLES[key];
+                clearUrlResults();
+                dom.urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                handleUrlScan();
+            }
+        });
+    });
+
+    // Initialize QR Drag/Drop & File Input
+    initQrScanner();
 
     // Initialize tabs & simulator
     initTabs();
@@ -1940,6 +1994,543 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
             });
         }
     }
+
+    // ================================================================
+    //  QR CODE ("QUISHING") & DEEP URL SANDBOX INSPECTOR
+    // ================================================================
+    let lastUrlScanData = null;
+
+    function initQrScanner() {
+        if (!dom.qrDropZone || !dom.qrFileInput) return;
+
+        dom.qrDropZone.addEventListener('click', (e) => {
+            if (e.target.closest('#qrPreviewArea')) return;
+            dom.qrFileInput.click();
+        });
+
+        dom.qrFileInput.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (file) processQrImageFile(file);
+        });
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dom.qrDropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dom.qrDropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dom.qrDropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dom.qrDropZone.classList.remove('dragover');
+            });
+        });
+
+        dom.qrDropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processQrImageFile(file);
+            }
+        });
+
+        window.addEventListener('paste', (e) => {
+            const quishTab = document.getElementById('quishingTab');
+            if (!quishTab || !quishTab.classList.contains('active')) return;
+            const items = (e.clipboardData || e.originalEvent.clipboardData)?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    if (blob) processQrImageFile(blob);
+                    break;
+                }
+            }
+        });
+    }
+
+    function processQrImageFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            if (dom.qrPreviewImg) dom.qrPreviewImg.src = dataUrl;
+            if (dom.qrDropPrompt) dom.qrDropPrompt.classList.add('hidden');
+            if (dom.qrPreviewArea) dom.qrPreviewArea.classList.remove('hidden');
+
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    if (typeof window.jsQR === 'function') {
+                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = window.jsQR(imgData.data, imgData.width, imgData.height, {
+                            inversionAttempts: 'dontInvert'
+                        }) || window.jsQR(imgData.data, imgData.width, imgData.height, {
+                            inversionAttempts: 'onlyInvert'
+                        });
+
+                        if (code && code.data) {
+                            if (dom.qrDecodedPayload) dom.qrDecodedPayload.textContent = code.data;
+                            if (dom.urlInput) dom.urlInput.value = code.data;
+                            handleUrlScan();
+                            return;
+                        }
+                    }
+                    if (dom.qrDecodedPayload) {
+                        dom.qrDecodedPayload.textContent = 'No QR barcode detected in image. Enter URL below.';
+                    }
+                } catch (err) {
+                    console.warn('QR decode error:', err);
+                }
+            };
+            img.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setUrlLoading(on) {
+        if (dom.analyzeUrlBtn) dom.analyzeUrlBtn.disabled = on;
+        if (dom.urlLoading) dom.urlLoading.classList.toggle('hidden', !on);
+    }
+
+    function setUrlStatus(msg) {
+        if (dom.urlStatusText) dom.urlStatusText.textContent = msg;
+    }
+
+    function clearUrlResults() {
+        if (dom.urlResultArea) dom.urlResultArea.innerHTML = '';
+        lastUrlScanData = null;
+    }
+
+    function analyzeUrlHeuristic(rawInput) {
+        let input = (rawInput || '').trim();
+        const findings = [];
+        let riskScore = 10;
+
+        const zeroWidthRegex = /[\u200B-\u200D\uFEFF\u00A0\u00AD]/g;
+        const zeroWidthMatches = input.match(zeroWidthRegex);
+        if (zeroWidthMatches) {
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '👻',
+                title: 'Stealth Zero-Width Unicode Characters Detected',
+                detail: 'Found ' + zeroWidthMatches.length + ' hidden character(s) used to evade regex filters.'
+            });
+            input = input.replace(zeroWidthRegex, '');
+        }
+
+        let parsed;
+        try {
+            if (!/^https?:\/\//i.test(input) && !/^ftp:\/\//i.test(input)) {
+                parsed = new URL('https://' + input);
+            } else {
+                parsed = new URL(input);
+            }
+        } catch (e) {
+            return {
+                rawUrl: rawInput, normalizedUrl: input, protocol: 'unknown', hostname: 'malformed', unicodeHost: 'malformed',
+                pathname: '', queryParams: [], riskScore: 90, verdict: 'MALFORMED / HIGH RISK', verdictClass: 'risk-high',
+                engine: 'Phish-Guard Deep URL Sandbox & Heuristic De-obfuscator',
+                matrix: {
+                    punycode: { status: 'danger', label: 'Malformed', detail: 'Invalid URL syntax' },
+                    redirect: { status: 'safe', label: 'None', detail: 'N/A' },
+                    subdomains: { status: 'safe', label: 'None', detail: 'N/A' },
+                    tld: { status: 'danger', label: 'Suspicious', detail: 'Cannot extract TLD' },
+                    ipDisguise: { status: 'safe', label: 'None', detail: 'N/A' }
+                },
+                findings: [{ severity: 'danger', icon: '🚨', title: 'Malformed URL Syntax', detail: 'URL cannot be parsed as standard RFC 3986.' }],
+                summary: 'The submitted link is malformed or intentionally broken.',
+                recommendations: ['Do not open or execute this link.']
+            };
+        }
+
+        const hostname = parsed.hostname.toLowerCase();
+        const protocol = parsed.protocol;
+
+        if (protocol === 'http:') {
+            riskScore += 15;
+            findings.push({ severity: 'warn', icon: '🔓', title: 'Unencrypted HTTP Protocol', detail: 'Uses plain HTTP instead of HTTPS.' });
+        }
+
+        let isPunycode = false, unicodeHost = hostname, punycodeDetail = 'Standard ASCII format', punycodeStatus = 'safe';
+        if (hostname.includes('xn--') || /[^\x00-\x7F]/.test(hostname)) {
+            isPunycode = true; riskScore += 45; punycodeStatus = 'danger';
+            try { unicodeHost = new URL('https://' + hostname).hostname; } catch (_) {}
+            punycodeDetail = 'IDN Punycode homograph (' + hostname + ' -> ' + unicodeHost + ')';
+            findings.push({ severity: 'danger', icon: '🎭', title: 'IDN Homograph Domain Spoofing (Punycode)', detail: 'Uses Punycode encoding (`' + hostname + '`) to visually impersonate trusted brands.' });
+        }
+
+        let isIpDisguised = false, ipStatus = 'safe', ipDetail = 'Standard DNS resolution';
+        const isHexIp = /^0x[0-9a-fA-F]+/i.test(hostname) || /0x[0-9a-fA-F]{2}/.test(hostname);
+        const isOctalIp = /^0[0-7]{2,3}\./.test(hostname);
+        const isDwordIp = /^\d{8,11}$/.test(hostname);
+        const isRawIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+
+        if (isHexIp || isOctalIp || isDwordIp) {
+            isIpDisguised = true; riskScore += 50; ipStatus = 'danger';
+            ipDetail = isHexIp ? 'Hexadecimal IP' : isOctalIp ? 'Octal IP' : 'Dword integer IP';
+            findings.push({ severity: 'danger', icon: '🔢', title: 'Obfuscated IP Host (' + ipDetail + ')', detail: 'Uses numeric/hex IP encoding to bypass domain blocklists.' });
+        } else if (isRawIpv4) {
+            riskScore += 25; ipStatus = 'warn'; ipDetail = 'Direct raw IPv4 (' + hostname + ')';
+            findings.push({ severity: 'warn', icon: '🌐', title: 'Direct IP Host', detail: 'Direct connection to raw IP without registered domain.' });
+        }
+        const HIGH_RISK_TLDS = ['.xyz', '.top', '.click', '.su', '.zip', '.mov', '.buzz', '.cfd', '.rest', '.icu', '.tk', '.ml', '.ga', '.cf', '.gq', '.country', '.stream', '.kim', '.monster', '.support', '.cam'];
+        let tldStatus = 'safe', tldDetail = 'Standard domain TLD';
+        const matchedTld = HIGH_RISK_TLDS.find(tld => hostname.endsWith(tld));
+        if (matchedTld) {
+            riskScore += 30; tldStatus = 'danger'; tldDetail = 'High-abuse TLD (' + matchedTld + ')';
+            findings.push({ severity: 'danger', icon: '🚩', title: 'High-Abuse Top-Level Domain (' + matchedTld + ')', detail: 'Registered under `' + matchedTld + '`, statistically linked to phishing.' });
+        }
+
+        const BRAND_TARGETS = ['microsoft', 'office', 'login', 'paypal', 'google', 'apple', 'amazon', 'netflix', 'chase', 'wellsfargo', 'docusign', 'adobe', 'coinbase', 'binance', 'dropbox', 'github', 'onedrive', 'sharepoint', 'auth', 'verify', 'account'];
+        let subdomainStatus = 'safe', subdomainDetail = 'Normal subdomain depth';
+        const domainParts = hostname.split('.');
+        if (domainParts.length >= 4) {
+            riskScore += 20; subdomainStatus = 'warn'; subdomainDetail = 'Stacked subdomains (' + (domainParts.length - 2) + ' levels)';
+            findings.push({ severity: 'warn', icon: '🏗️', title: 'Excessive Subdomain Stacking', detail: 'Contains ' + domainParts.length + ' labels to conceal root domain on mobile bars.' });
+        }
+
+        const rootDomain = domainParts.slice(-2).join('.');
+        const subdomainsStr = domainParts.slice(0, -2).join('.');
+        const matchedBrand = BRAND_TARGETS.find(b => subdomainsStr.includes(b) && !rootDomain.includes(b));
+        if (matchedBrand) {
+            riskScore += 45; subdomainStatus = 'danger'; subdomainDetail = 'Brand spoofing in subdomain (' + matchedBrand + ')';
+            findings.push({ severity: 'danger', icon: '🎯', title: 'Subdomain Brand Impersonation (' + matchedBrand + ')', detail: 'Subdomain mimics `' + matchedBrand + '`, while root host is `' + rootDomain + '`.' });
+        }
+
+        let redirectStatus = 'safe', redirectDetail = 'No redirection parameters';
+        const REDIRECT_PARAMS = ['q', 'url', 'redirect', 'dest', 'target', 'next', 'return_to', 'link', 'r', 'u', 'to', 'out', 'forward', 'goto', 'continue', 'auth_url'];
+        const searchParams = [];
+        parsed.searchParams.forEach((val, key) => { searchParams.push({ key, val }); });
+        const redirectParam = searchParams.find(p => REDIRECT_PARAMS.includes(p.key.toLowerCase()) && (/^https?:\/\//i.test(p.val) || /^\/\//.test(p.val)));
+        if (redirectParam) {
+            riskScore += 40; redirectStatus = 'danger'; redirectDetail = 'Open redirect (`' + redirectParam.key + '` -> ' + redirectParam.val.substring(0, 30) + '...)';
+            findings.push({ severity: 'danger', icon: '↪️', title: 'Open Redirect Exploitation', detail: 'Uses `?' + redirectParam.key + '=' + redirectParam.val + '` to bounce user to external site.' });
+        }
+
+        const SENSITIVE_KEYS = ['email', 'login_hint', 'user', 'session', 'token', 'auth', 'saml', 'jwt', 'code', 'password', 'key'];
+        const harvestedParams = searchParams.filter(p => SENSITIVE_KEYS.includes(p.key.toLowerCase()));
+        if (harvestedParams.length) {
+            riskScore += 25;
+            findings.push({ severity: 'warn', icon: '🔑', title: 'Credential/Session Harvest Parameters', detail: 'Query parameter(s) `?' + harvestedParams.map(p => p.key).join(', ') + '` present.' });
+        }
+
+        riskScore = Math.min(Math.max(riskScore, 0), 100);
+        let verdict = 'SAFE / LOW RISK', verdictClass = 'risk-safe';
+        if (riskScore >= 60) { verdict = 'HIGH RISK / PHISHING DETECTED'; verdictClass = 'risk-high'; }
+        else if (riskScore >= 30) { verdict = 'SUSPICIOUS / ELEVATED RISK'; verdictClass = 'risk-med'; }
+
+        const summary = riskScore >= 60
+            ? 'The target link displays active evasion mechanisms (e.g. ' + (findings[0]?.title || 'phishing indicators') + ') characteristic of credential harvesting attacks.'
+            : riskScore >= 30
+            ? 'The target link contains suspicious structures or unencrypted protocol.'
+            : 'No deceptive homographs, IP disguises, open redirects, or subdomain stacking detected.';
+
+        const recommendations = riskScore >= 60 ? [
+            'Do not open this URL on corporate or personal endpoints.',
+            'Block domain `' + rootDomain + '` at network gateway.',
+            'If opened, trigger credential reset and session revocation.'
+        ] : riskScore >= 30 ? [
+            'Verify destination domain with sender before authenticating.'
+        ] : [
+            'Standard link format, but always verify context before submitting credentials.'
+        ];
+
+        return {
+            rawUrl: rawInput, normalizedUrl: parsed.toString(), protocol: parsed.protocol.replace(':', ''),
+            hostname: parsed.hostname, unicodeHost, isPunycode, pathname: parsed.pathname,
+            search: parsed.search, queryParams: searchParams, riskScore, verdict, verdictClass,
+            engine: 'Phish-Guard Deep URL Sandbox & Heuristic De-obfuscator',
+            matrix: {
+                punycode: { status: punycodeStatus, label: isPunycode ? 'Punycode Homograph' : 'Standard ASCII', detail: punycodeDetail },
+                redirect: { status: redirectStatus, label: redirectParam ? 'Open Redirect' : 'Clean / Direct', detail: redirectDetail },
+                subdomains: { status: subdomainStatus, label: subdomainStatus === 'danger' ? 'Brand Squatting' : subdomainStatus === 'warn' ? 'Stacked' : 'Normal', detail: subdomainDetail },
+                tld: { status: tldStatus, label: matchedTld ? 'High-Risk TLD' : 'Standard', detail: tldDetail },
+                ipDisguise: { status: ipStatus, label: isIpDisguised ? 'IP Disguised' : isRawIpv4 ? 'Raw IP' : 'Standard DNS', detail: ipDetail }
+            },
+            findings, summary, recommendations
+        };
+    }
+
+    async function analyzeUrlWithGemini(urlStr, apiKey) {
+        const prompt = `You are a Principal Cyber Forensics Analyst specializing in Quishing and URL evasion (IDN Homographs, IP disguises, open redirects, subdomain brand stacking).
+
+Analyze this target URL:
+${urlStr}
+
+Respond with ONLY a single valid JSON object adhering strictly to this schema:
+{
+  "riskScore": 85,
+  "verdict": "HIGH RISK / PHISHING DETECTED",
+  "verdictClass": "risk-high",
+  "summary": "1-2 sentence executive threat summary",
+  "findings": [
+    {
+      "severity": "danger",
+      "icon": "🎭",
+      "title": "Threat Title",
+      "detail": "Technical description"
+    }
+  ],
+  "recommendations": [
+    "Actionable recommendation"
+  ]
+}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+            })
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('Gemini URL API error (' + resp.status + '): ' + errText);
+        }
+
+        const data = await resp.json();
+        const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawContent) throw new Error('Gemini returned an empty response.');
+        return JSON.parse(rawContent);
+    }
+
+    async function analyzeUrlWithOpenAI(urlStr, apiKey) {
+        const prompt = `You are a Principal Cyber Forensics Analyst specializing in Quishing and URL evasion (IDN Homographs, IP disguises, open redirects, subdomain brand stacking).
+
+Analyze this target URL:
+${urlStr}
+
+Respond with ONLY a single valid JSON object adhering strictly to this schema:
+{
+  "riskScore": 85,
+  "verdict": "HIGH RISK / PHISHING DETECTED",
+  "verdictClass": "risk-high",
+  "summary": "1-2 sentence executive threat summary",
+  "findings": [
+    {
+      "severity": "danger",
+      "icon": "🎭",
+      "title": "Threat Title",
+      "detail": "Technical description"
+    }
+  ],
+  "recommendations": [
+    "Actionable recommendation"
+  ]
+}`;
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: OPENAI_MODEL,
+                messages: [{ role: 'user', content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.1
+            })
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('OpenAI URL API error (' + resp.status + '): ' + errText);
+        }
+
+        const data = await resp.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) throw new Error('OpenAI returned an empty response.');
+        return JSON.parse(content);
+    }
+    async function handleUrlScan() {
+        const rawText = dom.urlInput ? dom.urlInput.value.trim() : '';
+        if (!rawText) {
+            alert('Please enter a target URL or upload/paste a QR code image.');
+            return;
+        }
+
+        clearUrlResults();
+        setUrlLoading(true);
+        setUrlStatus('De-obfuscating homographs, redirects & subdomains…');
+
+        try {
+            const heuristicResult = analyzeUrlHeuristic(rawText);
+
+            if (vtKey && heuristicResult.normalizedUrl) {
+                setUrlStatus('Querying VirusTotal threat intelligence…');
+                try {
+                    const vtRes = await checkVirusTotal([heuristicResult.normalizedUrl], vtKey);
+                    if (vtRes && vtRes.length) heuristicResult.vtData = vtRes[0];
+                } catch (vtErr) {
+                    console.warn('VirusTotal query failed for URL:', vtErr);
+                }
+            }
+
+            if (aiProvider !== 'heuristic' && apiKey) {
+                setUrlStatus('Running deep AI forensic URL sandbox (' + (aiProvider === 'gemini' ? 'Gemini 1.5 Flash' : 'GPT-4o-mini') + ')…');
+                try {
+                    const aiData = aiProvider === 'openai'
+                        ? await analyzeUrlWithOpenAI(heuristicResult.normalizedUrl, apiKey)
+                        : await analyzeUrlWithGemini(heuristicResult.normalizedUrl, apiKey);
+
+                    if (aiData.findings && Array.isArray(aiData.findings) && aiData.findings.length) heuristicResult.findings = aiData.findings;
+                    if (typeof aiData.riskScore === 'number') heuristicResult.riskScore = aiData.riskScore;
+                    if (aiData.verdict) heuristicResult.verdict = aiData.verdict;
+                    if (aiData.verdictClass) heuristicResult.verdictClass = aiData.verdictClass;
+                    if (aiData.summary) heuristicResult.summary = aiData.summary;
+                    if (aiData.recommendations) heuristicResult.recommendations = aiData.recommendations;
+                    heuristicResult.engine = aiProvider === 'openai' ? 'OpenAI GPT-4o-mini + Deep URL Sandbox' : 'Google Gemini 1.5 Flash + Deep URL Sandbox';
+                } catch (aiErr) {
+                    console.warn('AI URL forensic sandbox fallback to heuristics:', aiErr);
+                }
+            }
+
+            lastUrlScanData = {
+                timestamp: new Date().toISOString(),
+                engine: heuristicResult.engine,
+                data: heuristicResult
+            };
+
+            renderUrlResults(heuristicResult);
+        } catch (err) {
+            console.error('URL Sandbox failed:', err);
+            dom.urlResultArea.innerHTML =
+                '<div class="error-box"><strong>URL Sandbox Error:</strong> ' + escapeHtml(err.message || 'Failed to sandbox URL.') + '</div>';
+        } finally {
+            setUrlLoading(false);
+        }
+    }
+
+    function renderUrlResults(data) {
+        if (!dom.urlResultArea) return;
+        const matrix = data.matrix;
+
+        let html = '<div class="verdict-banner ' + data.verdictClass + '">'
+                 + '<div class="verdict-left">'
+                 + '<div class="risk-score-badge">' + data.riskScore + '</div>'
+                 + '<div class="verdict-text-wrap">'
+                 + '<span class="verdict-title">' + escapeHtml(data.verdict) + '</span>'
+                 + '<span class="verdict-engine">Engine: ' + escapeHtml(data.engine) + '</span>'
+                 + '</div>'
+                 + '</div>'
+                 + '</div>';
+
+        html += '<div class="auth-matrix-card">'
+              + '<h3 class="card-label">🔬 Deep De-obfuscation &amp; Evasion Matrix</h3>'
+              + '<div class="auth-matrix-grid">'
+              + '  <div class="auth-matrix-item"><span class="auth-lbl">Punycode / Homograph</span><span class="auth-badge-pill pill-' + matrix.punycode.status + '">' + escapeHtml(matrix.punycode.label) + '</span><span class="auth-detail-text">' + escapeHtml(matrix.punycode.detail) + '</span></div>'
+              + '  <div class="auth-matrix-item"><span class="auth-lbl">IP Obfuscation</span><span class="auth-badge-pill pill-' + matrix.ipDisguise.status + '">' + escapeHtml(matrix.ipDisguise.label) + '</span><span class="auth-detail-text">' + escapeHtml(matrix.ipDisguise.detail) + '</span></div>'
+              + '  <div class="auth-matrix-item"><span class="auth-lbl">Open Redirect</span><span class="auth-badge-pill pill-' + matrix.redirect.status + '">' + escapeHtml(matrix.redirect.label) + '</span><span class="auth-detail-text">' + escapeHtml(matrix.redirect.detail) + '</span></div>'
+              + '  <div class="auth-matrix-item"><span class="auth-lbl">Subdomain Depth</span><span class="auth-badge-pill pill-' + matrix.subdomains.status + '">' + escapeHtml(matrix.subdomains.label) + '</span><span class="auth-detail-text">' + escapeHtml(matrix.subdomains.detail) + '</span></div>'
+              + '  <div class="auth-matrix-item"><span class="auth-lbl">TLD Reputation</span><span class="auth-badge-pill pill-' + matrix.tld.status + '">' + escapeHtml(matrix.tld.label) + '</span><span class="auth-detail-text">' + escapeHtml(matrix.tld.detail) + '</span></div>'
+              + '</div>'
+              + '</div>';
+
+        html += '<div class="url-decomp-card">'
+              + '<h3 class="card-label">🧱 Decomposed URL Architecture</h3>'
+              + '<div class="url-decomp-table">'
+              + '  <div class="url-decomp-row"><span class="url-decomp-label">Protocol:</span><span class="url-decomp-val ' + (data.protocol === 'http' ? 'val-alert' : 'val-safe') + '">' + escapeHtml(data.protocol.toUpperCase()) + '</span></div>'
+              + '  <div class="url-decomp-row"><span class="url-decomp-label">Encoded Hostname:</span><span class="url-decomp-val ' + (data.isPunycode ? 'val-alert' : '') + '">' + escapeHtml(data.hostname) + '</span></div>'
+              + (data.isPunycode ? '  <div class="url-decomp-row"><span class="url-decomp-label">Decoded Unicode Host:</span><span class="url-decomp-val val-alert">' + escapeHtml(data.unicodeHost) + ' (IDN Lookalike)</span></div>' : '')
+              + '  <div class="url-decomp-row"><span class="url-decomp-label">Target Path:</span><span class="url-decomp-val">' + escapeHtml(data.pathname || '/') + '</span></div>'
+              + '</div>';
+
+        if (data.queryParams && data.queryParams.length) {
+            html += '<div style="margin-top: 14px;"><span class="card-label" style="font-size:0.8rem; margin-bottom:6px; display:block;">Extracted Query Parameters (' + data.queryParams.length + '):</span>';
+            html += '<div class="url-decomp-table">';
+            const SENSITIVE_KEYS = ['email', 'login_hint', 'user', 'session', 'token', 'auth', 'saml', 'jwt', 'code', 'password', 'key', 'q', 'url', 'redirect', 'dest', 'target', 'next', 'return_to'];
+            data.queryParams.forEach(p => {
+                const isKeyAlert = SENSITIVE_KEYS.includes(p.key.toLowerCase());
+                html += '<div class="url-decomp-row"><span class="url-decomp-label">' + escapeHtml(p.key) + ':</span><span class="url-decomp-val ' + (isKeyAlert ? 'val-alert' : '') + '">' + escapeHtml(p.val) + '</span></div>';
+            });
+            html += '</div></div>';
+        }
+        html += '</div>';
+
+        if (data.vtData) {
+            const vt = data.vtData;
+            html += '<div class="vt-card" style="margin-bottom:16px;">'
+                  + '<h3 class="card-label">🛡️ VirusTotal Live Intelligence</h3>'
+                  + '<div class="vt-stats">'
+                  + '<div class="vt-badge vt-danger">Malicious: ' + (vt.malicious || 0) + '</div>'
+                  + '<div class="vt-badge vt-warn">Suspicious: ' + (vt.suspicious || 0) + '</div>'
+                  + '<div class="vt-badge vt-clean">Harmless: ' + (vt.harmless || 0) + '</div>'
+                  + '</div></div>';
+        }
+        if (data.summary) {
+            html += '<div class="summary-card" style="margin-bottom:16px;">'
+                  + '<h3 class="card-label">📋 Threat Executive Summary</h3>'
+                  + '<p class="summary-text">' + escapeHtml(data.summary) + '</p>'
+                  + '</div>';
+        }
+
+        if (data.findings && data.findings.length) {
+            html += '<div class="spoof-indicators-card">'
+                  + '<h3 class="card-label">🚨 Forensic Findings &amp; Deceptions (' + data.findings.length + ')</h3>'
+                  + '<ul class="spoof-list">';
+            data.findings.forEach(f => {
+                const sClass = f.severity === 'danger' ? 'spoof-item-danger' : f.severity === 'warn' ? 'spoof-item-warn' : 'spoof-item-safe';
+                html += '<li class="spoof-item ' + sClass + '">'
+                      + '<span class="spoof-icon">' + (f.icon || '⚡') + '</span>'
+                      + '<div class="spoof-text"><strong>' + escapeHtml(f.title) + '</strong>: ' + escapeHtml(f.detail) + '</div>'
+                      + '</li>';
+            });
+            html += '</ul></div>';
+        }
+
+        html += '<div class="export-actions-row">'
+              + '<button type="button" class="btn-export" id="btnCopyUrlReport">📋 Copy Sandbox Dossier</button>'
+              + '</div>';
+
+        dom.urlResultArea.innerHTML = html;
+
+        const copyBtn = $('#btnCopyUrlReport');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                let md = '# Phish-Guard Deep URL Sandbox Dossier\n\n';
+                md += '- **Verdict:** ' + data.verdict + '\n';
+                md += '- **Risk Score:** ' + data.riskScore + '/100\n';
+                md += '- **Engine:** ' + data.engine + '\n';
+                md += '- **Target URL:** `' + data.normalizedUrl + '`\n';
+                md += '- **Protocol:** ' + data.protocol.toUpperCase() + '\n';
+                md += '- **Hostname:** ' + data.hostname + (data.isPunycode ? ' (Unicode: ' + data.unicodeHost + ')' : '') + '\n\n';
+                md += '## De-obfuscation Matrix\n';
+                md += '- **Punycode / Homograph:** ' + matrix.punycode.label + ' - ' + matrix.punycode.detail + '\n';
+                md += '- **IP Obfuscation:** ' + matrix.ipDisguise.label + ' - ' + matrix.ipDisguise.detail + '\n';
+                md += '- **Open Redirect:** ' + matrix.redirect.label + ' - ' + matrix.redirect.detail + '\n';
+                md += '- **Subdomain Depth:** ' + matrix.subdomains.label + ' - ' + matrix.subdomains.detail + '\n';
+                md += '- **TLD Reputation:** ' + matrix.tld.label + ' - ' + matrix.tld.detail + '\n\n';
+                if (data.findings && data.findings.length) {
+                    md += '## Forensic Findings\n';
+                    data.findings.forEach(f => {
+                        md += '- ' + (f.icon || '⚡') + ' **' + f.title + ':** ' + f.detail + '\n';
+                    });
+                }
+                navigator.clipboard.writeText(md).then(() => {
+                    const oldText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copied!';
+                    setTimeout(() => { copyBtn.innerHTML = oldText; }, 2000);
+                });
+            });
+        }
+    }
+
+
+
 
     // ================================================================
     //  EXPORT REPORT HELPERS

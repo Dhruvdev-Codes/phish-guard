@@ -24,6 +24,15 @@ A modern client-side cybersecurity web application designed to detect phishing, 
   - Envelope Return-Path vs From display name mismatch and Reply-To hijacking detection.
   - Interactive Relay Route Timeline with originating server IP attribution.
   - Multi-engine AI forensic summary and one-click markdown report export.
+- **📱 QR Code ("Quishing") & Deep Link Sandbox:**
+  - Client-side pure JS QR barcode image scanner (drag-and-drop, file upload, or clipboard Ctrl+V).
+  - IDN Homograph Punycode attack detection (`xn--` lookalike Cyrillic/Greek domain spoofing).
+  - IP host obfuscation de-obfuscator (Hex `0x...`, Octal `0...`, Dword integer, raw IPv4).
+  - Subdomain stacking and brand squatting analyzer (e.g., `login.microsoftonline.com.attacker.cfd`).
+  - Open redirect parameter vulnerability exploit detection (`?url=`, `?next=`, `?redirect=`).
+  - Stealth zero-width character injection detection (`\u200B`, `\uFEFF`, soft hyphens).
+  - High-risk TLD reputation scoring (`.xyz`, `.top`, `.cfd`, `.click`, `.zip`, `.su`, etc.).
+  - Live VirusTotal reputation query & one-click security analyst dossier export.
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
 - **🎯 Interactive Security Awareness Lab (Simulator):**

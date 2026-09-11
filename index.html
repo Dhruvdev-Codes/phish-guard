@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phish-Guard | AI & Cognitive Social Engineering Analyzer</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Pure client-side QR decoder -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -23,6 +25,9 @@
             </button>
             <button type="button" class="tab-btn" data-tab="headerTab" id="tabHeaderBtn">
                 <span class="tab-icon">📨</span> Email Header Analyzer
+            </button>
+            <button type="button" class="tab-btn" data-tab="quishingTab" id="tabQuishingBtn">
+                <span class="tab-icon">📱</span> QR &amp; Deep Link Sandbox
             </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
@@ -155,7 +160,80 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- TAB 3: SECURITY AWARENESS LAB (SIMULATOR)                 -->
+        <!-- TAB 3: QR CODE ("QUISHING") & DEEP URL SANDBOX            -->
+        <!-- ========================================================= -->
+        <div id="quishingTab" class="tab-content">
+            <section class="card quish-intro-card">
+                <div class="quish-tab-title-wrap">
+                    <h2>📱 QR Code ("Quishing") &amp; Deep Link Sandbox</h2>
+                    <p>Detect evasion tactics in phishing QR codes and modern URLs: IDN Punycode homographs, IP obfuscation (Hex/Octal/Dword), open redirects, subdomain stacking, zero-width injections, and credential-harvesting query parameters.</p>
+                </div>
+            </section>
+
+            <!-- ===== URL / QUISHING PRESETS ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ URL Threat Test Cases:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-url-sample" data-sample="punycode">🚨 IDN Punycode Homograph</button>
+                    <button type="button" class="btn-sample btn-url-sample" data-sample="stackedSubdomains">🚨 Stacked Subdomain Phish</button>
+                    <button type="button" class="btn-sample btn-url-sample" data-sample="openRedirect">🚨 Open Redirect Exploit</button>
+                    <button type="button" class="btn-sample btn-url-sample" data-sample="hexIp">🚨 Hex IP Obfuscation</button>
+                    <button type="button" class="btn-sample btn-url-sample" data-sample="cleanPortal">✅ Authentic Azure Portal</button>
+                </div>
+            </div>
+
+            <!-- ===== QR SCANNER & DROP ZONE ===== -->
+            <section class="card qr-upload-card">
+                <div class="card-header-flex">
+                    <label class="card-label">📷 Scan QR Code Image (Quishing Decoder)</label>
+                    <span class="badge-optional">Client-Side Zero-Upload</span>
+                </div>
+                <div id="qrDropZone" class="qr-dropzone">
+                    <input type="file" id="qrFileInput" accept="image/*" class="qr-file-hidden">
+                    <div class="qr-drop-prompt" id="qrDropPrompt">
+                        <span class="qr-icon-large">📷</span>
+                        <p class="qr-prompt-main"><strong>Drag &amp; Drop QR Code Image</strong> or <span class="qr-browse-link">Browse File</span></p>
+                        <p class="qr-prompt-sub">Supports PNG, JPG, WebP &bull; You can also paste from clipboard (Ctrl+V)</p>
+                    </div>
+                    <div id="qrPreviewArea" class="qr-preview-area hidden">
+                        <img id="qrPreviewImg" class="qr-preview-thumb" alt="QR Preview">
+                        <div class="qr-decoded-box">
+                            <span class="qr-decoded-label">Decoded Payload from QR Code:</span>
+                            <code id="qrDecodedPayload" class="qr-decoded-val"></code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== DIRECT URL INPUT ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="urlInput" class="card-label">Target URL to Sandbox</label>
+                    <button type="button" id="clearUrlBtn" class="btn-link">Clear</button>
+                </div>
+                <div class="url-input-wrapper">
+                    <span class="url-input-icon">🔗</span>
+                    <input type="text" id="urlInput" class="url-text-input" placeholder="https://login.microsoftonline.account-verify.cfd/auth?token=..." spellcheck="false" autocomplete="off">
+                </div>
+            </section>
+
+            <!-- ===== URL SCAN BUTTON ===== -->
+            <button id="analyzeUrlBtn" class="btn-scan">
+                <span class="btn-icon">🔬</span> De-obfuscate &amp; Sandbox URL
+            </button>
+
+            <!-- ===== URL LOADING ===== -->
+            <div id="urlLoading" class="loading hidden">
+                <div class="spinner"></div>
+                <span id="urlStatusText">De-obfuscating homographs, redirects &amp; querying VirusTotal…</span>
+            </div>
+
+            <!-- ===== URL RESULTS AREA ===== -->
+            <div id="urlResultArea" class="result-area"></div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: SECURITY AWARENESS LAB (SIMULATOR)                 -->
         <!-- ========================================================= -->
         <div id="simulatorTab" class="tab-content">
             <section class="card sim-intro-card">
