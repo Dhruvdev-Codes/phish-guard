@@ -1649,6 +1649,220 @@ textarea::placeholder { color:#484f58; }
 }
 
 
+/* ================================================================
+   TAB 7: CYBER THREAT INTELLIGENCE (CTI) IOC STUDIO STYLING
+   ================================================================ */
+.ioc-toolbar-card {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.ioc-toolbar-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.ioc-filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.ioc-filter-pill {
+    background: #161b22;
+    border: 1px solid #21262d;
+    color: #8b949e;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ioc-filter-pill:hover {
+    color: #e2e8f0;
+    border-color: #38bdf8;
+}
+.ioc-filter-pill.active {
+    background: #38bdf8;
+    color: #090d14;
+    border-color: #38bdf8;
+}
+.btn-ioc-defang {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-ioc-defang.active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    color: #10b981;
+}
+.ioc-secondary-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.ioc-search-input {
+    flex: 1;
+    min-width: 220px;
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: #f1f5f9;
+    font-size: 0.84rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.ioc-search-input:focus {
+    border-color: #38bdf8;
+}
+.ioc-export-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.btn-ioc-export {
+    background: #161b22;
+    border: 1px solid #21262d;
+    color: #cbd5e1;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-ioc-export:hover {
+    background: #1e293b;
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+.ioc-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+.ioc-card-item {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.ioc-card-item:hover {
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+}
+.ioc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ioc-type-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.btn-ioc-copy-item {
+    background: transparent;
+    border: 1px solid #21262d;
+    color: #8b949e;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-ioc-copy-item:hover {
+    background: #161b22;
+    color: #00ff9c;
+    border-color: #00ff9c;
+}
+.ioc-card-val {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #e2e8f0;
+    word-break: break-all;
+    line-height: 1.4;
+}
+.ioc-card-meta {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+.ioc-empty-msg {
+    grid-column: 1 / -1;
+    background: #090d14;
+    border: 1px dashed #1e293b;
+    border-radius: 8px;
+    padding: 28px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.ioc-rules-card {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 18px 20px;
+}
+.btn-ioc-rule-tab {
+    background: #161b22;
+    border: 1px solid #21262d;
+    color: #8b949e;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-ioc-rule-tab.active {
+    background: #00ff9c;
+    color: #090d14;
+    border-color: #00ff9c;
+}
+.ioc-code-pre {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 0;
+    overflow-x: auto;
+}
+.ioc-code-pre code {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: #38bdf8;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
 /* -- Error -- */
 .error-box {
     background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3);

@@ -38,6 +38,9 @@
             <button type="button" class="tab-btn" data-tab="playbookTab" id="tabPlaybookBtn">
                 <span class="tab-icon">🛡️</span> SOC IR Playbooks
             </button>
+            <button type="button" class="tab-btn" data-tab="iocTab" id="tabIocBtn">
+                <span class="tab-icon">🔬</span> IOC Studio &amp; Rules
+            </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
@@ -357,6 +360,9 @@
             </div>
 
             <!-- ===== PAYLOAD RESULTS AREA ===== -->
+            <div id="payloadResultArea" class="result-area"></div>
+        </div>
+
         <!-- ========================================================= -->
         <!-- TAB 6: SOC INCIDENT RESPONSE PLAYBOOKS & REMEDIATION      -->
         <!-- ========================================================= -->
@@ -411,12 +417,125 @@
             <div id="playbookContainer"></div>
         </div>
 
-            <div id="payloadResultArea" class="result-area"></div>
-        </div>
-
 
         <!-- ========================================================= -->
-        <!-- TAB 5: SECURITY AWARENESS LAB (SIMULATOR)                 -->
+        <!-- TAB 7: CYBER THREAT INTELLIGENCE & DETECTION STUDIO       -->
+        <!-- ========================================================= -->
+        <div id="iocTab" class="tab-content">
+            <section class="card playbook-intro-card">
+                <div class="playbook-tab-title-wrap">
+                    <h2>🔬 Cyber Threat Intelligence (CTI) IOC Studio &amp; Detection Engineering</h2>
+                    <p>Extract, de-obfuscate, defang, and structure indicators of compromise from raw threat dumps, malware writeups, or email forensics. Automatically compile STIX 2.1 bundles, MISP events, YARA signatures, Sigma SIEM rules, Snort IDS alerts, and Defender KQL hunts.</p>
+                </div>
+            </section>
+
+            <!-- ===== CTI THREAT SAMPLES ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Quick Threat Dossier Presets:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-ioc-sample" data-sample="apt29">🔴 APT29 Nobelium Spear-Phish</button>
+                    <button type="button" class="btn-sample btn-ioc-sample" data-sample="storm0558">🟠 Storm-0558 AitM &amp; Token Theft</button>
+                    <button type="button" class="btn-sample btn-ioc-sample" data-sample="qakbot">🟡 QakBot Malspam ISO</button>
+                    <button type="button" class="btn-sample btn-ioc-sample" data-sample="lockbit">🟣 LockBit 3.0 Extortion Lure</button>
+                </div>
+            </div>
+
+            <!-- ===== RAW THREAT INGESTION INPUT ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="iocRawInput" class="card-label">Threat Report / Forensics Text Ingestion</label>
+                    <button type="button" id="btnClearIOCInput" class="btn-link">Clear</button>
+                </div>
+                <textarea id="iocRawInput" class="payload-textarea" rows="7" placeholder="Paste unstructured threat intelligence reports, SIEM alerts, email logs, or forensic writeups here…" spellcheck="false"></textarea>
+                <div style="margin-top: 12px; display: flex; gap: 10px;">
+                    <button type="button" id="btnExtractIOCs" class="btn-scan" style="margin-top: 0;">
+                        <span class="btn-icon">⚡</span> Extract &amp; Analyze Indicators
+                    </button>
+                </div>
+            </section>
+
+            <!-- ===== LIVE IOC STATS BAR ===== -->
+            <div class="sim-stats-bar">
+                <div class="stat-box">
+                    <span class="stat-label">Total IOCs</span>
+                    <span id="statIocTotal" class="stat-value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Domains / Hosts</span>
+                    <span id="statIocDomains" class="stat-value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">IP Addresses</span>
+                    <span id="statIocIps" class="stat-value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">URLs</span>
+                    <span id="statIocUrls" class="stat-value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">File Hashes</span>
+                    <span id="statIocHashes" class="stat-value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Email Senders</span>
+                    <span id="statIocEmails" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <!-- ===== FILTER, DEFANG & EXPORT TOOLBAR ===== -->
+            <section class="card ioc-toolbar-card">
+                <div class="ioc-toolbar-flex">
+                    <div class="ioc-filter-group">
+                        <button type="button" class="ioc-filter-pill active" data-filter="all">All IOCs</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="domains">Domains</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="ips">IPs</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="urls">URLs</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="hashes">Hashes</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="emails">Emails</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="cves">CVEs</button>
+                        <button type="button" class="ioc-filter-pill" data-filter="registry">Registry</button>
+                    </div>
+                    <div class="ioc-actions-group">
+                        <button type="button" id="toggleDefangBtn" class="btn-ioc-defang active">🛡️ Defanged View (Safe)</button>
+                    </div>
+                </div>
+
+                <div class="ioc-secondary-bar">
+                    <input type="text" id="iocSearchInput" class="ioc-search-input" placeholder="🔍 Search extracted indicators…">
+                    <div class="ioc-export-btns">
+                        <button type="button" id="btnExportSTIX" class="btn-ioc-export">📦 STIX 2.1 JSON</button>
+                        <button type="button" id="btnExportMISP" class="btn-ioc-export">📑 MISP Event</button>
+                        <button type="button" id="btnExportCSV" class="btn-ioc-export">📊 CSV Matrix</button>
+                        <button type="button" id="btnExportBlocklist" class="btn-ioc-export">🚫 Blocklist (RPZ/DNS)</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== EXTRACTED INDICATORS GRID ===== -->
+            <div id="iocItemsGrid" class="ioc-items-grid"></div>
+
+            <!-- ===== DETECTION ENGINEERING WORKBENCH ===== -->
+            <section class="card ioc-rules-card" style="margin-top: 24px;">
+                <div class="card-header-flex">
+                    <div>
+                        <label class="card-label">🛡️ Automated Detection Engineering Studio</label>
+                        <p id="iocRuleTitle" style="color: #94a3b8; font-size: 0.85rem; margin-top: 2px;">YARA Signature Rule (.yar)</p>
+                    </div>
+                    <button type="button" id="btnCopyDetectionRule" class="btn-script-copy">📋 Copy Detection Rule</button>
+                </div>
+                <div class="playbook-script-nav" style="margin-top: 12px; margin-bottom: 12px;">
+                    <button type="button" class="btn-ioc-rule-tab active" data-rule="yara">YARA Email/File (.yar)</button>
+                    <button type="button" class="btn-ioc-rule-tab" data-rule="sigma">Sigma SIEM (.yml)</button>
+                    <button type="button" class="btn-ioc-rule-tab" data-rule="snort">Snort / Suricata IDS</button>
+                    <button type="button" class="btn-ioc-rule-tab" data-rule="kql">Sentinel Defender KQL</button>
+                    <button type="button" class="btn-ioc-rule-tab" data-rule="splunk">Splunk SPL</button>
+                </div>
+                <pre class="ioc-code-pre"><code id="iocRuleCodeBlock"></code></pre>
+            </section>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 8: SECURITY AWARENESS LAB (SIMULATOR)                 -->
         <!-- ========================================================= -->
         <div id="simulatorTab" class="tab-content">
             <section class="card sim-intro-card">
@@ -492,6 +611,7 @@
         </footer>
     </div>
 
+    <script src="ioc-studio.js"></script>
     <script src="playbooks.js"></script>
     <script src="app.js"></script>
 </body>

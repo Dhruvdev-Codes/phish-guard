@@ -57,7 +57,12 @@ A modern client-side cybersecurity web application designed to detect phishing, 
     - **Microsoft Sentinel & Defender KQL Hunts**: Query `OfficeActivity` for unauthorized rule creation, `SigninLogs` for impossible travel token theft, and `DeviceProcessEvents` for browser child droppers.
     - **Splunk SPL Queries**: Search activity logs for mailbox manipulation and attacker indicators.
   - **Ready-to-Send Incident Broadcast Email Drafter**: One-click internal broadcast notices for company employees and executive leadership.
-
+- **🔬 Cyber Threat Intelligence (CTI) IOC Studio & Detection Engineering Workbench:**
+  - Automated universal regex extraction across IPv4/IPv6, FQDNs, URLs, Hashes (SHA-256, SHA-1, MD5), Emails, CVEs, MITRE ATT&CK techniques, Windows Registry keys, and Crypto Wallets (BTC/ETH).
+  - One-click **🛡️ Defang / Refang** toggle (`hxxps://`, `[.]`, `[@]`) for safe sharing in tickets and Slack.
+  - Multi-format CTI Bundling: **OASIS STIX 2.1 JSON Bundle**, **MISP Event JSON**, **CSV Threat Matrix**, and **RPZ/DNS Blocklist**.
+  - Automated Detection Engineering Studio: generates valid **YARA Rules (.yar)**, **Sigma SIEM Rules (.yml)**, **Snort / Suricata IDS Rules (.rules)**, **Microsoft Sentinel / Defender KQL Hunts**, and **Splunk SPL**.
+  - Built-in real-world threat dossiers (APT29 Nobelium Spear-Phish, Storm-0558 Cloud AitM, QakBot Malspam ISO, LockBit 3.0 Extortion Lure).
 
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
