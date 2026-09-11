@@ -32,6 +32,9 @@
             <button type="button" class="tab-btn" data-tab="radarTab" id="tabRadarBtn">
                 <span class="tab-icon">🌐</span> Lookalike &amp; Typosquat Radar
             </button>
+            <button type="button" class="tab-btn" data-tab="payloadTab" id="tabPayloadBtn">
+                <span class="tab-icon">📦</span> Payload &amp; Smuggling
+            </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
@@ -291,6 +294,69 @@
             <!-- ===== RADAR RESULTS AREA ===== -->
             <div id="radarResultArea" class="result-area"></div>
         </div>
+        <!-- ========================================================= -->
+        <!-- TAB 5: PAYLOAD & HTML SMUGGLING INSPECTOR                 -->
+        <!-- ========================================================= -->
+        <div id="payloadTab" class="tab-content">
+            <section class="card payload-intro-card">
+                <div class="payload-tab-title-wrap">
+                    <h2>📦 Attachment &amp; HTML Smuggling Payload Inspector</h2>
+                    <p>Deconstruct client-side evasion techniques: decode hidden Base64/Blob payloads, detect JavaScript-driven file downloads, extract disguised extensions (.pdf.exe / .iso), and inspect malicious SVG/Iframe triggers.</p>
+                </div>
+            </section>
+
+            <!-- ===== PAYLOAD SAMPLES ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Quick Payload Samples:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-payload-sample" data-payload="smugglingBlob">🚨 HTML Smuggling (Blob / ISO)</button>
+                    <button type="button" class="btn-sample btn-payload-sample" data-payload="iframeLogin">🚨 Obfuscated Fake Login</button>
+                    <button type="button" class="btn-sample btn-payload-sample" data-payload="svgScript">🚨 Malicious SVG Script</button>
+                    <button type="button" class="btn-sample btn-payload-sample" data-payload="doubleExt">🚨 Disguised Double Extension</button>
+                    <button type="button" class="btn-sample btn-payload-sample" data-payload="cleanReceipt">✅ Clean Corporate Receipt</button>
+                </div>
+            </div>
+
+            <!-- ===== DROP ZONE & FILE UPLOAD ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label class="card-label">Upload Suspicious File (.html, .svg, .eml, .js, .txt)</label>
+                    <span style="font-size: 0.78rem; color: #8b949e;">Client-side sandbox analysis</span>
+                </div>
+                <div class="payload-drop-zone" id="payloadDropZone">
+                    <input type="file" id="payloadFileInput" class="hidden-file-input" accept=".html,.htm,.svg,.eml,.txt,.js,.vbs,.ps1">
+                    <div class="payload-drop-inner" id="payloadDropPrompt">
+                        <span class="payload-drop-icon">📁</span>
+                        <span class="payload-drop-text">Drag &amp; drop file here, or <strong style="color: #38bdf8;">browse</strong></span>
+                        <span class="payload-drop-sub">Evaluates script injections, Base64 blobs, and download vectors</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== PAYLOAD CODE / TEXTAREA INPUT ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="payloadInput" class="card-label">Raw HTML / JavaScript / MIME Payload Content</label>
+                    <button type="button" id="clearPayloadBtn" class="btn-link">Clear</button>
+                </div>
+                <textarea id="payloadInput" class="payload-textarea" rows="8" placeholder="Paste raw HTML, SVG markup, MIME attachment payload, or obfuscated JavaScript here…" spellcheck="false"></textarea>
+            </section>
+
+            <!-- ===== ANALYZE BUTTON ===== -->
+            <button id="analyzePayloadBtn" class="btn-scan">
+                <span class="btn-icon">🔍</span> Inspect Payload &amp; De-obfuscate Smuggling
+            </button>
+
+            <!-- ===== PAYLOAD LOADING ===== -->
+            <div id="payloadLoading" class="loading hidden">
+                <div class="spinner"></div>
+                <span id="payloadStatusText">De-obfuscating Base64 blobs, parsing script hooks &amp; tracing download constructors…</span>
+            </div>
+
+            <!-- ===== PAYLOAD RESULTS AREA ===== -->
+            <div id="payloadResultArea" class="result-area"></div>
+        </div>
+
 
         <!-- ========================================================= -->
         <!-- TAB 5: SECURITY AWARENESS LAB (SIMULATOR)                 -->

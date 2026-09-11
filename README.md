@@ -40,6 +40,15 @@ A modern client-side cybersecurity web application designed to detect phishing, 
   - In-browser category filter pills and real-time live domain search.
   - Multi-format exports: Export **DNS/Firewall Blocklists** (`0.0.0.0 <domain>` for Pi-hole, Cloudflare Gateway, pfSense, DNS RPZ), **CSV Threat Intelligence Reports**, or copy domain lists.
   - Multi-Engine **AI Brand Defense Advisory** providing customized Certificate Transparency (CT) monitoring alerts, Google Dorks for phishing kit detection, and SPF/DMARC/BIMI policy enforcement recommendations.
+- **📦 Attachment & HTML Smuggling Payload Inspector (Client-Side Evasion Defense):**
+  - Forensic deconstruction of client-side evasion techniques: detects **HTML Smuggling** (`Blob()`, `URL.createObjectURL()`, `msSaveOrOpenBlob()`, automatic simulated anchor clicks).
+  - Safe Base64 payload de-obfuscation with **Windows PE Executable Signature Detection** (`MZ` / DOS stub identification) and decoded payload sandbox preview.
+  - Evasive JavaScript execution detection (`eval(unescape(...))`, dynamic `Function()`, hex string arrays).
+  - Full-screen iframe overlays (`100vw`/`100vh`) and credential-stealing form interception triggers.
+  - Deceptive double file extension detection (`.pdf.exe`, `.xlsx.vbs`, `.docx.iso`, `.jpg.hta`, `.zip.scr`).
+  - Malicious SVG script injection and XSS redirection hooks.
+  - Multi-engine AI and Local SOC incident triage summaries with Microsoft Sentinel/Defender KQL threat hunting queries and one-click SOC Markdown Dossier export.
+
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
 - **🎯 Interactive Security Awareness Lab (Simulator):**

