@@ -1,6 +1,8 @@
 /**
  * Phish-Guard - Cyber Defense Animated Background System
  * Lightweight, 60fps, high-performance canvas & ambient particle mesh.
+ * Features: Multi-role cyber nodes, active packet telemetry, radar pulse waves,
+ * touch-reactive constellation glow, and mobile-optimized glassmorphic integration.
  */
 (() => {
     'use strict';
@@ -11,90 +13,122 @@
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let prefersReducedMotion = false;
+    try {
+        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        prefersReducedMotion = mediaQuery.matches;
+        const updateMotion = (e) => { prefersReducedMotion = e.matches; };
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', updateMotion);
+        } else if (mediaQuery.addListener) {
+            mediaQuery.addListener(updateMotion);
+        }
+    } catch (e) {
+        prefersReducedMotion = false;
+    }
 
     let width = 0;
     let height = 0;
     let dpr = 1;
     let animId = null;
     let isRunning = false;
+    let lastTime = 0;
 
     // Node & Packet Configuration
     let nodes = [];
     let packets = [];
-    let mouse = { x: -9999, y: -9999, radius: 140, active: false };
+    let pulses = [];
+    let mouse = { x: -9999, y: -9999, radius: 140, active: false, intensity: 0 };
 
-    // Colors matching Phish-Guard Cyber Palette
+    // Colors matching Phish-Guard Cyber Defense Palette
     const COLORS = {
-        cyan: { r: 56, g: 189, b: 248 },     // #38bdf8
-        green: { r: 0, g: 255, b: 156 },     // #00ff9c
-        indigo: { r: 99, g: 102, b: 241 },   // #6366f1
-        purple: { r: 168, g: 85, b: 247 }    // #a855f7
+        cyan: { r: 56, g: 189, b: 248 },     // #38bdf8 - Relay
+        green: { r: 0, g: 255, b: 156 },     // #00ff9c - Sensor
+        indigo: { r: 129, g: 140, b: 248 },  // #818cf8 - Core Hub
+        purple: { r: 168, g: 85, b: 247 },   // #a855f7 - Encryption Node
+        red: { r: 244, g: 63, b: 94 }        // #f43f5e - Threat Quarantined
     };
 
     function getNodeCount() {
         const w = window.innerWidth;
-        if (w < 600) return 20;
-        if (w < 1024) return 32;
-        return 46;
+        if (w < 480) return 26;
+        if (w < 768) return 34;
+        if (w < 1200) return 46;
+        return 60;
     }
 
     function getMaxDistance() {
-        return window.innerWidth < 600 ? 110 : 150;
+        const w = window.innerWidth;
+        if (w < 480) return 130;
+        if (w < 768) return 145;
+        if (w < 1200) return 160;
+        return 175;
     }
 
     function getMouseRadius() {
-        return window.innerWidth < 600 ? 90 : 140;
+        return window.innerWidth < 600 ? 110 : 160;
     }
 
     class CyberNode {
-        constructor() {
-            this.reset(true);
+        constructor(initial = true) {
+            this.reset(initial);
         }
 
         reset(initial = false) {
-            this.x = initial ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
-            this.y = initial ? Math.random() * height : Math.random() * height;
-            
-            const speed = (0.22 + Math.random() * 0.42) * (window.innerWidth < 600 ? 0.7 : 1);
+            const w = width || window.innerWidth || 360;
+            const h = height || window.innerHeight || 640;
+
+            this.x = initial ? Math.random() * w : (Math.random() > 0.5 ? 0 : w);
+            this.y = initial ? Math.random() * h : Math.random() * h;
+
+            const isMobile = window.innerWidth < 600;
+            const speedBase = prefersReducedMotion ? 0.12 : (isMobile ? 0.4 : 0.55);
+            const speedVar = prefersReducedMotion ? 0.08 : (isMobile ? 0.35 : 0.5);
+            const speed = speedBase + Math.random() * speedVar;
             const angle = Math.random() * Math.PI * 2;
+
             this.vx = Math.cos(angle) * speed;
             this.vy = Math.sin(angle) * speed;
 
-            this.baseRadius = 1.6 + Math.random() * 1.6;
-            this.radius = this.baseRadius;
-            
             const rand = Math.random();
-            if (rand < 0.5) {
+            if (rand < 0.45) {
                 this.type = 'relay';
                 this.color = COLORS.cyan;
-            } else if (rand < 0.8) {
+                this.baseRadius = 2.0;
+            } else if (rand < 0.75) {
                 this.type = 'sensor';
                 this.color = COLORS.green;
-            } else {
+                this.baseRadius = 2.4;
+            } else if (rand < 0.92) {
                 this.type = 'hub';
                 this.color = COLORS.indigo;
+                this.baseRadius = 3.2;
+            } else {
+                this.type = 'threat';
+                this.color = COLORS.purple;
+                this.baseRadius = 2.2;
             }
 
+            this.radius = this.baseRadius;
             this.pulse = Math.random() * Math.PI * 2;
-            this.pulseSpeed = 0.02 + Math.random() * 0.03;
+            this.pulseSpeed = 0.025 + Math.random() * 0.035;
         }
 
         update() {
             this.x += this.vx;
             this.y += this.vy;
 
-            if (this.x < 0) { this.x = 0; this.vx *= -1; }
-            else if (this.x > width) { this.x = width; this.vx *= -1; }
-            if (this.y < 0) { this.y = 0; this.vy *= -1; }
-            else if (this.y > height) { this.y = height; this.vy *= -1; }
+            if (this.x < 0) { this.x = 0; this.vx = Math.abs(this.vx); }
+            else if (this.x > width) { this.x = width; this.vx = -Math.abs(this.vx); }
+            if (this.y < 0) { this.y = 0; this.vy = Math.abs(this.vy); }
+            else if (this.y > height) { this.y = height; this.vy = -Math.abs(this.vy); }
 
             this.pulse += this.pulseSpeed;
             if (this.type === 'sensor' || this.type === 'hub') {
-                this.radius = this.baseRadius + Math.sin(this.pulse) * 0.7;
+                this.radius = this.baseRadius + Math.sin(this.pulse) * 0.8;
             }
 
-            if (mouse.active) {
+            if (mouse.intensity > 0.01) {
                 const dx = mouse.x - this.x;
                 const dy = mouse.y - this.y;
                 const distSq = dx * dx + dy * dy;
@@ -102,7 +136,7 @@
 
                 if (distSq < rSq && distSq > 0) {
                     const dist = Math.sqrt(distSq);
-                    const force = (1 - dist / mouse.radius) * 1.4;
+                    const force = (1 - dist / mouse.radius) * 1.6 * mouse.intensity;
                     this.x -= (dx / dist) * force;
                     this.y -= (dy / dist) * force;
                 }
@@ -113,19 +147,36 @@
             const { r, g, b } = this.color;
 
             if (this.type === 'sensor') {
-                const ringAlpha = 0.2 + Math.sin(this.pulse) * 0.15;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius * 2.5, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${ringAlpha})`;
-                ctx.lineWidth = 0.75;
-                ctx.stroke();
+                const ringAlpha = (0.22 + Math.sin(this.pulse) * 0.18);
+                if (ringAlpha > 0) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 2.6, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${ringAlpha})`;
+                    ctx.lineWidth = 0.9;
+                    ctx.stroke();
+                }
+            } else if (this.type === 'hub') {
+                const ringAlpha = (0.28 + Math.sin(this.pulse) * 0.22);
+                if (ringAlpha > 0) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 3.2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${ringAlpha})`;
+                    ctx.lineWidth = 1.1;
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 1.8, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${ringAlpha * 0.7})`;
+                    ctx.lineWidth = 0.7;
+                    ctx.stroke();
+                }
             }
 
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-            ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.6)`;
-            ctx.shadowBlur = 6;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.92)`;
+            ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+            ctx.shadowBlur = 8;
             ctx.fill();
             ctx.shadowBlur = 0;
         }
@@ -136,9 +187,9 @@
             this.source = source;
             this.target = target;
             this.progress = 0;
-            this.speed = 0.009 + Math.random() * 0.012;
+            this.speed = 0.012 + Math.random() * 0.016;
             this.color = source.color;
-            this.size = 1.3;
+            this.size = 1.8;
         }
 
         update() {
@@ -153,26 +204,59 @@
 
             ctx.beginPath();
             ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
-            ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.9)`;
-            ctx.shadowBlur = 8;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.98)`;
+            ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.95)`;
+            ctx.shadowBlur = 10;
             ctx.fill();
             ctx.shadowBlur = 0;
+        }
+    }
+
+    class RadarPulse {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.radius = 4;
+            this.maxRadius = Math.max(width, height) * 0.45;
+            this.speed = 2.4;
+            this.color = color || COLORS.cyan;
+            this.alpha = 0.4;
+        }
+
+        update() {
+            this.radius += this.speed;
+            this.alpha = (1 - this.radius / this.maxRadius) * 0.35;
+            return this.radius < this.maxRadius && this.alpha > 0.01;
+        }
+
+        draw(ctx) {
+            const { r, g, b } = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${this.alpha})`;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
         }
     }
 
     function resize() {
         const prevWidth = width;
         const prevHeight = height;
+
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        width = window.innerWidth;
-        height = window.innerHeight;
+        const newWidth = window.innerWidth || document.documentElement.clientWidth || 360;
+        const newHeight = window.innerHeight || document.documentElement.clientHeight || 640;
+
+        if (width > 0 && Math.abs(newWidth - prevWidth) < 5 && Math.abs(newHeight - prevHeight) < 80) {
+            return;
+        }
+
+        width = newWidth;
+        height = newHeight;
         mouse.radius = getMouseRadius();
 
         canvas.width = Math.floor(width * dpr);
         canvas.height = Math.floor(height * dpr);
-        canvas.style.width = width + 'px';
-        canvas.style.height = height + 'px';
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
@@ -197,7 +281,7 @@
         }
 
         while (nodes.length < targetCount) {
-            nodes.push(new CyberNode());
+            nodes.push(new CyberNode(true));
         }
         if (nodes.length > targetCount) {
             nodes.length = targetCount;
@@ -208,23 +292,54 @@
         const count = getNodeCount();
         nodes = [];
         for (let i = 0; i < count; i++) {
-            nodes.push(new CyberNode());
+            nodes.push(new CyberNode(true));
         }
         packets = [];
+        pulses = [];
     }
 
-    function loop() {
+    function loop(currentTime) {
         if (!isRunning) return;
+
+        if (!mouse.active && mouse.intensity > 0) {
+            mouse.intensity -= 0.025;
+            if (mouse.intensity < 0) mouse.intensity = 0;
+        } else if (mouse.active && mouse.intensity < 1) {
+            mouse.intensity = Math.min(1, mouse.intensity + 0.1);
+        }
 
         ctx.clearRect(0, 0, width, height);
 
         const maxDist = getMaxDistance();
         const maxDistSq = maxDist * maxDist;
 
+        if (!prefersReducedMotion && (!lastTime || currentTime - lastTime > 5500)) {
+            lastTime = currentTime;
+            const hubNodes = nodes.filter(n => n.type === 'hub' || n.type === 'sensor');
+            if (hubNodes.length > 0) {
+                const origin = hubNodes[Math.floor(Math.random() * hubNodes.length)];
+                if (pulses.length < 3) {
+                    pulses.push(new RadarPulse(origin.x, origin.y, origin.color));
+                }
+            }
+        }
+
+        for (let i = pulses.length - 1; i >= 0; i--) {
+            const p = pulses[i];
+            if (p.update()) {
+                p.draw(ctx);
+            } else {
+                pulses.splice(i, 1);
+            }
+        }
+
         for (let i = 0; i < nodes.length; i++) {
             nodes[i].update();
             nodes[i].draw(ctx);
         }
+
+        const maxPackets = window.innerWidth < 600 ? 8 : 14;
+        const packetChance = window.innerWidth < 600 ? 0.005 : 0.0035;
 
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < nodes.length; j++) {
@@ -235,7 +350,8 @@
                 const distSq = dx * dx + dy * dy;
 
                 if (distSq < maxDistSq) {
-                    const alpha = (1 - distSq / maxDistSq) * 0.35;
+                    const ratio = 1 - distSq / maxDistSq;
+                    const alpha = ratio * 0.42;
                     const r = Math.round((n1.color.r + n2.color.r) / 2);
                     const g = Math.round((n1.color.g + n2.color.g) / 2);
                     const b = Math.round((n1.color.b + n2.color.b) / 2);
@@ -244,17 +360,17 @@
                     ctx.moveTo(n1.x, n1.y);
                     ctx.lineTo(n2.x, n2.y);
                     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.lineWidth = 0.8;
+                    ctx.lineWidth = ratio > 0.6 ? 1.0 : 0.75;
                     ctx.stroke();
 
-                    if (packets.length < 6 && Math.random() < 0.0016) {
+                    if (!prefersReducedMotion && packets.length < maxPackets && Math.random() < packetChance) {
                         packets.push(new TelemetryPacket(n1, n2));
                     }
                 }
             }
         }
 
-        if (mouse.active) {
+        if (mouse.intensity > 0.01) {
             const mDistSq = mouse.radius * mouse.radius;
             for (let i = 0; i < nodes.length; i++) {
                 const n = nodes[i];
@@ -263,15 +379,21 @@
                 const distSq = dx * dx + dy * dy;
 
                 if (distSq < mDistSq) {
-                    const alpha = (1 - distSq / mDistSq) * 0.45;
+                    const alpha = (1 - distSq / mDistSq) * 0.55 * mouse.intensity;
                     ctx.beginPath();
                     ctx.moveTo(n.x, n.y);
                     ctx.lineTo(mouse.x, mouse.y);
                     ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-                    ctx.lineWidth = 0.9;
+                    ctx.lineWidth = 1.1;
                     ctx.stroke();
                 }
             }
+
+            ctx.beginPath();
+            ctx.arc(mouse.x, mouse.y, 4 + (1 - mouse.intensity) * 12, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(0, 255, 156, ${0.45 * mouse.intensity})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         }
 
         for (let i = packets.length - 1; i >= 0; i--) {
@@ -300,41 +422,8 @@
         }
     }
 
-    function renderStaticFrame() {
-        ctx.clearRect(0, 0, width, height);
-        const maxDist = getMaxDistance();
-        const maxDistSq = maxDist * maxDist;
-
-        nodes.forEach(n => n.draw(ctx));
-
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const n1 = nodes[i];
-                const n2 = nodes[j];
-                const dx = n2.x - n1.x;
-                const dy = n2.y - n1.y;
-                const distSq = dx * dx + dy * dy;
-                if (distSq < maxDistSq) {
-                    const alpha = (1 - distSq / maxDistSq) * 0.22;
-                    ctx.beginPath();
-                    ctx.moveTo(n1.x, n1.y);
-                    ctx.lineTo(n2.x, n2.y);
-                    ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-                    ctx.lineWidth = 0.75;
-                    ctx.stroke();
-                }
-            }
-        }
-    }
-
     function init() {
         resize();
-
-        if (prefersReducedMotion.matches) {
-            renderStaticFrame();
-            return;
-        }
-
         start();
 
         let resizeTimer;
@@ -342,10 +431,11 @@
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 resize();
-                if (prefersReducedMotion.matches) {
-                    renderStaticFrame();
-                }
-            }, 100);
+            }, 120);
+        }, { passive: true });
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resize, 200);
         }, { passive: true });
 
         window.addEventListener('mousemove', (e) => {
@@ -363,6 +453,7 @@
                 mouse.x = e.touches[0].clientX;
                 mouse.y = e.touches[0].clientY;
                 mouse.active = true;
+                mouse.intensity = 1.0;
             }
         }, { passive: true });
 
@@ -385,15 +476,6 @@
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 stop();
-            } else if (!prefersReducedMotion.matches) {
-                start();
-            }
-        });
-
-        prefersReducedMotion.addEventListener('change', (e) => {
-            if (e.matches) {
-                stop();
-                renderStaticFrame();
             } else {
                 start();
             }

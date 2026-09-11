@@ -5,14 +5,14 @@
 
 /* -- Custom Properties / Theme Tokens -- */
 :root {
-    --bg-dark: #0a0e17;
-    --bg-card: #111827;
-    --bg-card-subtle: #0d131f;
-    --bg-input: #090d14;
-    --bg-elevated: #161f30;
-    --border-main: #1e293b;
-    --border-subtle: #2a374a;
-    --border-bright: #30363d;
+    --bg-dark: #070b12;
+    --bg-card: rgba(14, 20, 34, 0.76);
+    --bg-card-subtle: rgba(10, 16, 28, 0.7);
+    --bg-input: rgba(8, 12, 22, 0.88);
+    --bg-elevated: rgba(22, 32, 50, 0.88);
+    --border-main: rgba(56, 189, 248, 0.16);
+    --border-subtle: rgba(56, 189, 248, 0.1);
+    --border-bright: rgba(56, 189, 248, 0.32);
     --text-primary: #f1f5f9;
     --text-secondary: #c9d1d9;
     --text-muted: #8b949e;
@@ -20,7 +20,7 @@
     --accent-green: #00ff9c;
     --accent-cyan: #38bdf8;
     --accent-blue: #58a6ff;
-    --accent-indigo: #6366f1;
+    --accent-indigo: #818cf8;
     --accent-purple: #a855f7;
     --accent-orange: #f0883e;
     --accent-yellow: #fbbf24;
@@ -32,7 +32,7 @@
     --radius-full: 9999px;
     --font-sans: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
 /* -- Reset & Box Sizing -- */
@@ -72,8 +72,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     height: 100dvh;
     pointer-events: none;
     overflow: hidden;
@@ -86,6 +86,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+    display: block;
     z-index: 2;
     pointer-events: none;
 }
@@ -94,14 +95,14 @@ body {
     position: absolute;
     inset: 0;
     background-image: 
-        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
-    background-size: 50px 50px;
-    mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.9) 0%, transparent 85%);
-    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.9) 0%, transparent 85%);
-    opacity: 0.75;
+        linear-gradient(to right, rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.045) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.35) 75%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.35) 75%, transparent 100%);
+    opacity: 0.8;
     z-index: 1;
-    animation: cyberGridPulse 9s ease-in-out infinite alternate;
+    animation: cyberGridPulse 8s ease-in-out infinite alternate;
 }
 
 .cyber-bg-glow {
@@ -119,7 +120,7 @@ body {
     height: 550px;
     top: -120px;
     left: 8%;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
     animation: driftGlow1 24s ease-in-out infinite alternate;
 }
 
@@ -128,7 +129,7 @@ body {
     height: 650px;
     bottom: -160px;
     right: 5%;
-    background: radial-gradient(circle, rgba(0, 255, 156, 0.13) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 255, 156, 0.16) 0%, transparent 70%);
     animation: driftGlow2 28s ease-in-out infinite alternate;
 }
 
@@ -137,13 +138,13 @@ body {
     height: 480px;
     top: 45%;
     right: 25%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, transparent 70%);
     animation: driftGlow3 22s ease-in-out infinite alternate;
 }
 
 @keyframes cyberGridPulse {
     0% { opacity: 0.45; }
-    50% { opacity: 0.85; }
+    50% { opacity: 0.9; }
     100% { opacity: 0.45; }
 }
 
@@ -167,26 +168,26 @@ body {
 
 @media (max-width: 640px) {
     .cyber-bg-glow {
-        filter: blur(45px);
-        opacity: 0.4;
+        filter: blur(55px);
+        opacity: 0.5;
     }
     .cyber-bg-glow.glow-1 {
-        width: 280px;
-        height: 280px;
+        width: 320px;
+        height: 320px;
         top: -60px;
         left: -40px;
     }
     .cyber-bg-glow.glow-2 {
-        width: 320px;
-        height: 320px;
+        width: 350px;
+        height: 350px;
         bottom: -80px;
         right: -40px;
     }
     .cyber-bg-glow.glow-3 {
-        width: 240px;
-        height: 240px;
+        width: 280px;
+        height: 280px;
         top: 40%;
-        right: 10%;
+        right: 5%;
     }
 }
 
@@ -266,11 +267,13 @@ body {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin-bottom: 24px;
-    background: #0d1117;
+    background: rgba(13, 17, 23, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     padding: 8px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-main);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .tab-btn {
@@ -299,14 +302,14 @@ body {
 }
 .tab-btn:hover {
     color: #e2e8f0;
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(56, 189, 248, 0.25);
 }
 .tab-btn.active {
-    background: #161f30;
+    background: rgba(22, 31, 48, 0.95);
     color: var(--accent-green);
-    border-color: rgba(0, 255, 156, 0.35);
-    box-shadow: 0 2px 12px rgba(0, 255, 156, 0.15);
+    border-color: rgba(0, 255, 156, 0.4);
+    box-shadow: 0 2px 14px rgba(0, 255, 156, 0.18), inset 0 0 12px rgba(0, 255, 156, 0.06);
 }
 
 /* Tablet & Mobile Nav Tabs Optimization */
@@ -318,10 +321,13 @@ body {
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x proximity;
         scrollbar-width: none;
+        -ms-overflow-style: none;
         gap: 6px;
         padding: 6px;
         border-radius: var(--radius-md);
         overscroll-behavior-x: contain;
+        mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
     }
     .nav-tabs::-webkit-scrollbar { display: none; }
     .tab-btn {
@@ -330,7 +336,7 @@ body {
         padding: 9px 13px;
         font-size: 0.82rem;
         white-space: nowrap;
-        min-height: 40px;
+        min-height: 42px;
     }
 }
 @media (max-width: 480px) {
@@ -371,15 +377,18 @@ body {
 /* -- Cards -- */
 .card {
     background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-main);
     border-radius: var(--radius-lg);
     padding: 22px;
     margin-bottom: 20px;
     box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 .card:hover {
-    border-color: rgba(56, 189, 248, 0.25);
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.08);
 }
 .card-label {
     display: block;
@@ -607,7 +616,7 @@ textarea::placeholder { color: #484f58; }
 
 /* iOS zoom fix */
 @media (max-width: 768px) {
-    textarea, input[type="text"], input[type="password"], select {
+    textarea, input, select {
         font-size: 16px !important;
     }
 }
@@ -648,6 +657,8 @@ textarea::placeholder { color: #484f58; }
     gap: 12px;
     padding: 14px 20px;
     background: var(--bg-card);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-main);
     border-radius: var(--radius-md);
     margin-bottom: 20px;
@@ -670,6 +681,8 @@ textarea::placeholder { color: #484f58; }
 .result-area { margin-bottom: 24px; }
 .result-card {
     background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-main);
     border-radius: var(--radius-lg);
     padding: 24px;
@@ -2391,7 +2404,9 @@ textarea::placeholder { color: #484f58; }
     }
 }
 .ioc-toolbar-card {
-    background: #0d1117;
+    background: var(--bg-card);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-main);
     border-radius: var(--radius-md);
     padding: 16px 20px;
