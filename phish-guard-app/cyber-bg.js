@@ -43,6 +43,10 @@
         return window.innerWidth < 600 ? 110 : 150;
     }
 
+    function getMouseRadius() {
+        return window.innerWidth < 600 ? 90 : 140;
+    }
+
     class CyberNode {
         constructor() {
             this.reset(true);
@@ -158,9 +162,12 @@
     }
 
     function resize() {
+        const prevWidth = width;
+        const prevHeight = height;
         dpr = Math.min(window.devicePixelRatio || 1, 2);
         width = window.innerWidth;
         height = window.innerHeight;
+        mouse.radius = getMouseRadius();
 
         canvas.width = Math.floor(width * dpr);
         canvas.height = Math.floor(height * dpr);
@@ -170,7 +177,31 @@
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
 
-        initNodes();
+        updateNodesOnResize(prevWidth, prevHeight);
+    }
+
+    function updateNodesOnResize(prevWidth, prevHeight) {
+        const targetCount = getNodeCount();
+        if (nodes.length === 0) {
+            initNodes();
+            return;
+        }
+
+        if (prevWidth > 0 && prevHeight > 0) {
+            const scaleX = width / prevWidth;
+            const scaleY = height / prevHeight;
+            nodes.forEach(n => {
+                n.x = Math.max(0, Math.min(width, n.x * scaleX));
+                n.y = Math.max(0, Math.min(height, n.y * scaleY));
+            });
+        }
+
+        while (nodes.length < targetCount) {
+            nodes.push(new CyberNode());
+        }
+        if (nodes.length > targetCount) {
+            nodes.length = targetCount;
+        }
     }
 
     function initNodes() {
@@ -314,7 +345,7 @@
                 if (prefersReducedMotion.matches) {
                     renderStaticFrame();
                 }
-            }, 120);
+            }, 100);
         }, { passive: true });
 
         window.addEventListener('mousemove', (e) => {
@@ -335,7 +366,19 @@
             }
         }, { passive: true });
 
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches && e.touches[0]) {
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+                mouse.active = true;
+            }
+        }, { passive: true });
+
         window.addEventListener('touchend', () => {
+            mouse.active = false;
+        }, { passive: true });
+
+        window.addEventListener('touchcancel', () => {
             mouse.active = false;
         }, { passive: true });
 

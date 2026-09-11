@@ -635,6 +635,7 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
                 $$('.tab-content').forEach((c) => c.classList.remove('active'));
                 const target = document.getElementById(btn.dataset.tab);
                 if (target) target.classList.add('active');
+                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             });
         });
     }
