@@ -4,6 +4,10 @@
 
 A client-side web application that uses AI to detect phishing and social-engineering attempts in emails, SMS, and other text-based communications. Built as a B.Tech 4th-year Cybersecurity & AI capstone project.
 
+## Live Demo
+
+🔗 **https://dhruvdev-codes.github.io/phish-guard/**
+
 ## Features
 
 - **AI-Powered Analysis** — GPT models analyze messages for social-engineering tactics (urgency, authority, fear, impersonation…)
@@ -34,6 +38,9 @@ A client-side web application that uses AI to detect phishing and social-enginee
 ```
 phish-guard/
 ├── README.md
+├── .gitignore
+├── .github/workflows/
+│   └── pages.yml       — GitHub Actions Pages deployment
 └── phish-guard-app/
     ├── index.html   — Page structure & UI
     ├── style.css    — Dark cybersecurity theme
@@ -56,6 +63,19 @@ phish-guard/
 | Threat Intel | VirusTotal API v3 |
 | Hosting | GitHub Pages |
 | Security | BYOK (Bring Your Own Key) |
+
+## Deploying to GitHub Pages
+
+The repository includes a GitHub Actions workflow (`.github/workflows/pages.yml`) that automatically builds and publishes the app to **https://dhruvdev-codes.github.io/phish-guard/** on every push to `main`.
+
+**One-time setup (takes 30 seconds):**
+
+1. Open your repo on GitHub → **Settings**
+2. Scroll to **Pages** (left sidebar, under "Code and automation")
+3. Under **Build and deployment** → **Source**, select **GitHub Actions**
+4. Re-run the workflow (Actions → "Deploy to GitHub Pages" → **Re-run all jobs**) or just push a new commit
+
+The workflow serves the `phish-guard-app/` folder. Every future push to `main` deploys automatically.
 
 ## Limitations
 
