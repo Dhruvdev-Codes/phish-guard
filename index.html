@@ -13,50 +13,64 @@
         <header class="header">
             <div class="logo">🛡️</div>
             <h1>Phish-Guard</h1>
-            <p class="tagline">AI-Powered Social Engineering Analyzer</p>
+            <p class="tagline">AI & Heuristic Social Engineering Analyzer</p>
         </header>
 
         <!-- ===== API KEYS (collapsible) ===== -->
         <section class="card">
-            <button id="keyToggle" class="key-toggle">
-                ⚙️ API Configuration <span class="arrow">▼</span>
+            <button id="keyToggle" class="key-toggle" aria-expanded="false">
+                ⚙️ API Configuration <span class="badge-optional">Optional for Local Mode</span> <span class="arrow">▼</span>
             </button>
-            <div id="keyPanel" class="key-panel">
+            <div id="keyPanel" class="key-panel collapsed">
                 <div class="key-row">
                     <div class="key-group">
-                        <label for="openaiKey">OpenAI API Key <span class="req">*</span></label>
+                        <label for="openaiKey">OpenAI API Key <span class="opt">(for GPT-4o-mini AI Scan)</span></label>
                         <input type="password" id="openaiKey" placeholder="sk-..." autocomplete="off">
-                        <small>Required — powers the phishing analysis engine</small>
+                        <small>Powers deep semantic AI analysis. If omitted, built-in Heuristic Engine is used.</small>
                     </div>
                     <div class="key-group">
                         <label for="vtKey">VirusTotal API Key <span class="opt">(optional)</span></label>
                         <input type="password" id="vtKey" placeholder="Enter VT key..." autocomplete="off">
-                        <small>Enables URL reputation scanning</small>
+                        <small>Enables real-time URL reputation & threat feed scanning.</small>
                     </div>
                 </div>
                 <div class="security-note">
-                    🔒 Keys are held in browser memory <strong>only</strong>. They are never saved to disk,
-                    localStorage, or any external server.
+                    🔒 <strong>Privacy Guarantee:</strong> Keys are kept in browser memory only. They are never saved to disk, localStorage, cookies, or any backend server.
                 </div>
             </div>
         </section>
 
+        <!-- ===== SAMPLE SELECTOR ===== -->
+        <div class="samples-card">
+            <span class="samples-title">⚡ Quick Test Samples:</span>
+            <div class="sample-buttons">
+                <button type="button" class="btn-sample" data-sample="bank">🏦 Bank Urgency Scam</button>
+                <button type="button" class="btn-sample" data-sample="ceo">👔 CEO Spear Phish</button>
+                <button type="button" class="btn-sample" data-sample="package">📦 Package Smishing</button>
+                <button type="button" class="btn-sample" data-sample="creds">🔐 Password Expiry</button>
+                <button type="button" class="btn-sample" data-sample="legit">✅ Clean Meeting Invite</button>
+            </div>
+        </div>
+
         <!-- ===== MESSAGE INPUT ===== -->
         <section class="card">
-            <label for="messageInput" class="card-label">Suspicious Message</label>
-            <textarea id="messageInput" rows="10"
-                placeholder="Paste a suspicious email, SMS, or social-engineering message here...&#10;&#10;Example:&#10;URGENT: Your bank account has been compromised. Click http://secure-bank-login.xyz/verify immediately or your account will be permanently closed."></textarea>
+            <div class="card-header-flex">
+                <label for="messageInput" class="card-label">Suspicious Message Content</label>
+                <button type="button" id="clearBtn" class="btn-link">Clear</button>
+            </div>
+            <textarea id="messageInput" rows="9"
+                placeholder="Paste an email, SMS, or direct message here, or click a Quick Test Sample above..."></textarea>
         </section>
 
         <!-- ===== SCAN BUTTON ===== -->
         <button id="scanButton" class="btn-scan">
-            <span class="btn-icon">🔍</span> Scan for Threats
+            <span class="btn-icon">🔍</span> Analyze Threats
         </button>
 
         <!-- ===== LOADING / STATUS ===== -->
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <span id="statusText">Initializing…</span>
+            <span id="statusText">Initializing analyzer…</span>
         </div>
 
         <!-- ===== RESULTS ===== -->
@@ -64,11 +78,12 @@
 
         <!-- ===== FOOTER ===== -->
         <footer class="footer">
-            <p>B.Tech 4th-Year Cybersecurity &amp; AI Capstone Project</p>
+            <p><strong>Phish-Guard</strong> — B.Tech 4th-Year Cybersecurity &amp; AI Capstone Project</p>
             <p>
                 <a href="https://github.com/Dhruvdev-Codes/phish-guard" target="_blank" rel="noopener">
                     GitHub Repository
                 </a>
+                &bull; Built with Vanilla JS &bull; BYOK &amp; Zero-Telemetry
             </p>
         </footer>
     </div>

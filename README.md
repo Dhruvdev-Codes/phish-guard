@@ -1,90 +1,82 @@
-# Phish-Guard 🛡️
+﻿# Phish-Guard 🛡️
 
-**AI-Powered Social Engineering Analyzer**
+**AI & Heuristic Social Engineering Analyzer**
 
-A client-side web application that uses AI to detect phishing and social-engineering attempts in emails, SMS, and other text-based communications. Built as a  Cybersecurity & AI capstone project.
+A modern client-side cybersecurity web application designed to detect phishing, spear-phishing, smishing, and business email compromise (BEC) attacks. Built as a B.Tech 4th-year Cybersecurity & AI capstone project.
 
-## Live Demo
+## 🌐 Live Application
 
-🔗 **https://dhruvdev-codes.github.io/phish-guard/**
+👉 **[https://dhruvdev-codes.github.io/phish-guard/](https://dhruvdev-codes.github.io/phish-guard/)**
 
-## Features
+---
 
-- **AI-Powered Analysis** — GPT models analyze messages for social-engineering tactics (urgency, authority, fear, impersonation…)
-- **URL Reputation Scanning** — VirusTotal integration checks every extracted URL for known threats
-- **Risk Scoring** — 0–100 score with color-coded verdicts (safe / suspicious / phishing)
-- **Error Handling** — friendly, actionable messages for bad keys, rate limits, and network failures
-- **BYOK Security** — your API keys stay in browser memory only; never saved to disk or any server
+## ✨ Key Features
 
-## Quick Start
+- **Dual-Engine Detection Architecture:**
+  - 🤖 **Neural AI Engine (OpenAI GPT-4o-mini):** Deep semantic and social-engineering reasoning, MITRE ATT&CK technique categorization.
+  - ⚡ **Local Heuristic Engine (Offline / Zero-API-Key Mode):** Built-in rule-based cybersecurity engine detecting urgency patterns, fear appeals, IP-based URLs, brand spoofing, and abused high-risk TLDs immediately without requiring an API key.
+- **⚡ Quick Test Samples:** One-click presets for Bank Alert Scams, CEO Gift Card BEC, Package Smishing, IT Password Expiry, and Clean Meeting Invites for instant demonstration.
+- **🛡️ MITRE ATT&CK & Tactic Tagging:** Automatic mapping to MITRE ATT&CK (e.g. `T1566: Phishing`, `T1566.002: Spearphishing Link`, `T1598: Phishing for Information`).
+- **🔍 VirusTotal Threat Intelligence:** Live reputation scanning for extracted URLs and malicious domains.
+- **📊 Incident Report Export:** One-click export to Markdown (`.md`) or structured JSON (`.json`) for incident triage and documentation.
+- **🔒 Privacy-First BYOK Model:** Zero telemetry. API keys reside exclusively in browser memory and are wiped automatically on tab exit.
 
-1. Open `phish-guard-app/index.html` in your browser (or visit the live demo)
-2. Expand **⚙️ API Configuration**
-3. Enter your **OpenAI API key** (required)
-4. Optionally enter a **VirusTotal API key** to enable URL scanning
-5. Paste a suspicious message and click **🔍 Scan for Threats**
+---
 
-## API Keys
+## 🚀 Quick Start
 
-| Service | Purpose | Get a Key |
-|---------|---------|-----------|
-| OpenAI | Phishing text analysis | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| VirusTotal | URL reputation (optional) | [virustotal.com/gui/my-apikey](https://www.virustotal.com/gui/my-apikey) |
+1. Visit **[https://dhruvdev-codes.github.io/phish-guard/](https://dhruvdev-codes.github.io/phish-guard/)** (or open `index.html` locally).
+2. Choose one of the **⚡ Quick Test Samples** or paste your own message.
+3. Click **🔍 Analyze Threats**.
+   - *Default (No Key):* Runs the instantaneous Local Heuristic Engine.
+   - *Optional:* Click **⚙️ API Configuration** to enter an OpenAI or VirusTotal key for deep AI analysis.
+4. Review the risk score gauge, detected tactics, extracted URLs, and recommended mitigation actions.
+5. Click **📋 Copy Incident Report** or **📥 Download JSON** to save findings.
 
-> ⚠️ **Security:** Keys are held in browser memory only. They are cleared when the page closes and are never transmitted to any server other than the respective API endpoints.
+---
 
-## Architecture
+## 🔑 API Configuration (Optional)
+
+| Provider | Purpose | Status | Endpoint |
+|---|---|---|---|
+| **Built-in Heuristic** | Fast regex & semantic indicator scoring | Always Active | Local Browser Engine |
+| **OpenAI** | GPT-4o-mini deep NLP threat reasoning | Optional (BYOK) | `api.openai.com/v1` |
+| **VirusTotal** | Real-time URL threat reputation | Optional (BYOK) | `virustotal.com/api/v3` |
+
+> 🔒 **Zero-Persistence Guarantee:** Keys are never stored in `localStorage`, cookies, or sent to any custom server.
+
+---
+
+## 🏛️ Architecture & Project Structure
 
 ```
 phish-guard/
-├── index.html          — Page structure & UI (served at root)
-├── style.css           — Dark cybersecurity theme
-├── app.js              — Core analysis logic
-├── README.md           — Project documentation
-├── .gitignore          — Git ignore configuration
-└── .github/workflows/
-    └── pages.yml       — GitHub Actions Pages deployment
+├── index.html              # Main application UI & sample selector
+├── style.css               # Cybersecurity dark theme & responsive UI
+├── app.js                  # Dual-engine analysis, heuristics, API handlers
+├── README.md               # Project documentation & capstone specifications
+├── .github/workflows/
+│   └── pages.yml           # Automated CI/CD deployment to GitHub Pages
+└── phish-guard-app/        # Production bundle mirror
 ```
 
-### How It Works
+---
 
-1. **URL Extraction** — Regex-based extraction of URLs from the pasted message
-2. **VirusTotal Scan** — Extracted URLs are submitted to VirusTotal’s API for reputation analysis (via a public CORS proxy)
-3. **AI Analysis** — The full message is sent to OpenAI with a structured prompt requesting risk score, detected techniques, summary, and recommendations
-4. **Result Rendering** — Color-coded risk badges, technique tags, extracted URLs, and VirusTotal verdicts are rendered
+## 🛠️ Tech Stack
 
-## Tech Stack
+- **Frontend:** Semantic HTML5, Vanilla CSS3 (Custom Dark Cyberpunk Theme), Modern Vanilla JavaScript (ES2022)
+- **AI & NLP:** OpenAI GPT-4o-mini Chat Completions API with structured JSON output
+- **Threat Intelligence:** VirusTotal API v3 (via CORS-enabled proxy)
+- **Hosting & CI/CD:** GitHub Actions & GitHub Pages
+- **Security:** BYOK Architecture with ephemeral in-memory state
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML5, CSS3, Vanilla JavaScript (ES6+) |
-| AI Engine | OpenAI GPT-4o-mini |
-| Threat Intel | VirusTotal API v3 |
-| Hosting | GitHub Pages |
-| Security | BYOK (Bring Your Own Key) |
+---
 
-## Deploying to GitHub Pages
+## 🎓 Academic Capstone Context
 
-The repository includes a GitHub Actions workflow (`.github/workflows/pages.yml`) that automatically builds and publishes the app to **https://dhruvdev-codes.github.io/phish-guard/** on every push to `main`.
-
-**One-time setup (takes 30 seconds):**
-
-1. Open your repo on GitHub → **Settings**
-2. Scroll to **Pages** (left sidebar, under "Code and automation")
-3. Under **Build and deployment** → **Source**, select **GitHub Actions**
-4. Re-run the workflow (Actions → "Deploy to GitHub Pages" → **Re-run all jobs**) or just push a new commit
-
-The workflow serves the `phish-guard-app/` folder. Every future push to `main` deploys automatically.
-
-## Limitations
-
-- **CORS Proxy:** VirusTotal’s API does not allow direct browser calls, so a public CORS proxy (`corsproxy.io`) is used. A production deployment would route through a backend server.
-- **BYOK Model:** Users must supply their own API keys. This keeps keys secure but adds a setup step.
-- **URL Limit:** Maximum 5 URLs are scanned per analysis to manage API quota.
-
-## License
-
-Built for academic purposes — Cybersecurity & AI Capstone Project.
+- **Degree:** Bachelor of Technology (B.Tech) - 4th Year
+- **Domain:** Cybersecurity & Applied Artificial Intelligence
+- **Focus Areas:** Social Engineering Defense, MITRE ATT&CK Framework, Client-side Threat Analysis, Explainable Threat Scoring.
 
 ---
 
