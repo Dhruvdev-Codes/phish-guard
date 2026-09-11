@@ -64,6 +64,15 @@ A modern client-side cybersecurity web application designed to detect phishing, 
   - Automated Detection Engineering Studio: generates valid **YARA Rules (.yar)**, **Sigma SIEM Rules (.yml)**, **Snort / Suricata IDS Rules (.rules)**, **Microsoft Sentinel / Defender KQL Hunts**, and **Splunk SPL**.
   - Built-in real-world threat dossiers (APT29 Nobelium Spear-Phish, Storm-0558 Cloud AitM, QakBot Malspam ISO, LockBit 3.0 Extortion Lure).
 
+- **🌌 Cyber Defense Animated Threat Mesh & Ambient Atmosphere:**
+  - Interactive, canvas-driven dynamic cyber defense nodes (Relays, Honeypot Sensors, and Threat Hubs) connected via proximity-based vector links.
+  - Live telemetry packet simulation traveling along active mesh connection vectors.
+  - Interactive mouse/touch defense field response.
+  - Ambient drifting glow orbs and matrix coordinate grid with hardware-accelerated transforms.
+  - Adaptive particle scaling per device, Page Visibility API battery-saving auto-pause, and `@media (prefers-reduced-motion)` compliance.
+- **📱 Fully Responsive & Mobile-Optimized:**
+  - Modern CSS custom property token system across 12 granular breakpoints (1024px down to 380px).
+  - iOS touch zoom fixes (`font-size: 16px` on inputs), touch targets meeting 44–48px standards, and notch/safe-area insets (`env(safe-area-inset-*)`).
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
 - **🎯 Interactive Security Awareness Lab (Simulator):**
@@ -108,9 +117,12 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 
 ```
 phish-guard/
-├── index.html              # Main application UI, tabs & simulator cards
-├── style.css               # Cybersecurity dark theme & responsive UI
-├── app.js                  # Multi-model AI, cognitive heuristics, simulator lab
+├── index.html              # Main application UI, multi-tab layout & interactive tools
+├── style.css               # Modern responsive cyber design tokens & layout
+├── cyber-bg.js             # Canvas threat mesh particle & telemetry packet engine
+├── app.js                  # Core heuristic engine, AI BYOK handlers, scanner & tabs
+├── ioc-studio.js           # CTI regex extraction, STIX 2.1, Sigma & YARA rule generator
+├── playbooks.js            # SOC IR playbooks, containment script generator & drafts
 ├── README.md               # Project documentation & architecture specifications
 ├── .github/workflows/
 │   └── pages.yml           # Automated CI/CD deployment to GitHub Pages

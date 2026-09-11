@@ -2,13 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#090d14">
+    <meta name="color-scheme" content="dark">
     <title>Phish-Guard | AI & Cognitive Social Engineering Analyzer</title>
     <link rel="stylesheet" href="style.css">
     <!-- Pure client-side QR decoder -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
+    <!-- ===== CYBER DEFENSE ANIMATED BACKGROUND ===== -->
+    <div class="cyber-bg-wrapper" aria-hidden="true">
+        <div class="cyber-bg-glow glow-1"></div>
+        <div class="cyber-bg-glow glow-2"></div>
+        <div class="cyber-bg-glow glow-3"></div>
+        <div class="cyber-bg-grid"></div>
+        <canvas id="cyberBackground" class="cyber-bg-canvas"></canvas>
+    </div>
+
     <div class="container">
 
         <!-- ===== HEADER ===== -->
@@ -611,6 +622,7 @@
         </footer>
     </div>
 
+    <script src="cyber-bg.js"></script>
     <script src="ioc-studio.js"></script>
     <script src="playbooks.js"></script>
     <script src="app.js"></script>
