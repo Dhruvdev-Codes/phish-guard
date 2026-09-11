@@ -49,24 +49,31 @@
         red: { r: 244, g: 63, b: 94 }        // #f43f5e - Threat Quarantined
     };
 
+    function getViewportSize() {
+        const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 360;
+        const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 640;
+        return { width: w, height: h };
+    }
+
     function getNodeCount() {
-        const w = window.innerWidth;
-        if (w < 480) return 26;
-        if (w < 768) return 34;
-        if (w < 1200) return 46;
-        return 60;
+        const w = window.innerWidth || document.documentElement.clientWidth || 360;
+        if (w < 480) return 24;
+        if (w < 768) return 32;
+        if (w < 1200) return 44;
+        return 58;
     }
 
     function getMaxDistance() {
-        const w = window.innerWidth;
-        if (w < 480) return 130;
-        if (w < 768) return 145;
-        if (w < 1200) return 160;
-        return 175;
+        const w = window.innerWidth || document.documentElement.clientWidth || 360;
+        if (w < 480) return 120;
+        if (w < 768) return 140;
+        if (w < 1200) return 155;
+        return 170;
     }
 
     function getMouseRadius() {
-        return window.innerWidth < 600 ? 110 : 160;
+        const w = window.innerWidth || document.documentElement.clientWidth || 360;
+        return w < 600 ? 100 : 150;
     }
 
     class CyberNode {
@@ -243,21 +250,22 @@
         const prevWidth = width;
         const prevHeight = height;
 
+        const size = getViewportSize();
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const newWidth = window.innerWidth || document.documentElement.clientWidth || 360;
-        const newHeight = window.innerHeight || document.documentElement.clientHeight || 640;
 
-        if (width > 0 && Math.abs(newWidth - prevWidth) < 5 && Math.abs(newHeight - prevHeight) < 80) {
-            return;
-        }
-
-        width = newWidth;
-        height = newHeight;
+        width = size.width;
+        height = size.height;
         mouse.radius = getMouseRadius();
 
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
+        // Exact device pixel buffer alignment
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
 
+        // Exact CSS styling match
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+
+        // 2D context CSS pixel coordinate scaling
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
 
@@ -427,16 +435,19 @@
         start();
 
         let resizeTimer;
-        window.addEventListener('resize', () => {
+        const onResize = () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                resize();
-            }, 120);
+            resizeTimer = setTimeout(resize, 60);
+        };
+
+        window.addEventListener('resize', onResize, { passive: true });
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resize, 150);
         }, { passive: true });
 
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resize, 200);
-        }, { passive: true });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', onResize, { passive: true });
+        }
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
