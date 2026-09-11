@@ -33,6 +33,13 @@ A modern client-side cybersecurity web application designed to detect phishing, 
   - Stealth zero-width character injection detection (`\u200B`, `\uFEFF`, soft hyphens).
   - High-risk TLD reputation scoring (`.xyz`, `.top`, `.cfd`, `.click`, `.zip`, `.su`, etc.).
   - Live VirusTotal reputation query & one-click security analyst dossier export.
+- **🌐 Brand Lookalike & Typosquat Radar (Preemptive Threat Hunting):**
+  - Preemptive adversarial infrastructure discovery across homoglyphs (Cyrillic/Greek IDN replacements), bit-squatting (1-bit memory flip mutations), omission/transposition typos, and abusive phishing TLD swaps (`.top`, `.cfd`, `.xyz`, `.zip`, `.click`).
+  - Brand keyword stacking analysis (`login-`, `sso-`, `portal-`, `verify-`, `security-`, `mfa-`, `update-`).
+  - Automated risk scoring and tier categorization (Critical / High / Medium / Low).
+  - In-browser category filter pills and real-time live domain search.
+  - Multi-format exports: Export **DNS/Firewall Blocklists** (`0.0.0.0 <domain>` for Pi-hole, Cloudflare Gateway, pfSense, DNS RPZ), **CSV Threat Intelligence Reports**, or copy domain lists.
+  - Multi-Engine **AI Brand Defense Advisory** providing customized Certificate Transparency (CT) monitoring alerts, Google Dorks for phishing kit detection, and SPF/DMARC/BIMI policy enforcement recommendations.
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
 - **🎯 Interactive Security Awareness Lab (Simulator):**

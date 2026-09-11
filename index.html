@@ -29,6 +29,9 @@
             <button type="button" class="tab-btn" data-tab="quishingTab" id="tabQuishingBtn">
                 <span class="tab-icon">📱</span> QR &amp; Deep Link Sandbox
             </button>
+            <button type="button" class="tab-btn" data-tab="radarTab" id="tabRadarBtn">
+                <span class="tab-icon">🌐</span> Lookalike &amp; Typosquat Radar
+            </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
@@ -233,7 +236,64 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- TAB 4: SECURITY AWARENESS LAB (SIMULATOR)                 -->
+        <!-- TAB 4: BRAND LOOKALIKE & TYPOSQUAT RADAR                  -->
+        <!-- ========================================================= -->
+        <div id="radarTab" class="tab-content">
+            <section class="card radar-intro-card">
+                <div class="radar-tab-title-wrap">
+                    <h2>🌐 Lookalike &amp; Typosquat Radar (Preemptive Brand Defense)</h2>
+                    <p>Anticipate attacker infrastructure before spear-phishing campaigns launch. Generate and classify high-risk lookalike domains across homoglyphs, brand keyword stacking, bit-squatting, omission/transposition, and abusive TLD swaps.</p>
+                </div>
+            </section>
+
+            <!-- ===== BRAND PRESETS ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Quick Brand Presets:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="microsoft.com">Microsoft</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="paypal.com">PayPal</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="apple.com">Apple</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="chase.com">Chase</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="google.com">Google</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="docusign.com">DocuSign</button>
+                    <button type="button" class="btn-sample btn-radar-preset" data-brand="github.com">GitHub</button>
+                </div>
+            </div>
+
+            <!-- ===== TARGET DOMAIN INPUT ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="radarDomainInput" class="card-label">Target Corporate / Brand Domain</label>
+                    <button type="button" id="clearRadarBtn" class="btn-link">Clear</button>
+                </div>
+                <div class="url-input-wrapper">
+                    <span class="url-input-icon">🎯</span>
+                    <input type="text" id="radarDomainInput" class="url-text-input" placeholder="e.g. acmecorp.com, yourcompany.io, bankofamerica.com" spellcheck="false" autocomplete="off">
+                </div>
+            </section>
+
+            <!-- ===== RADAR GENERATE BUTTON ===== -->
+            <div class="radar-action-bar">
+                <button id="btnGenerateRadar" class="btn-scan">
+                    <span class="btn-icon">⚡</span> Generate Lookalike Threat Intelligence
+                </button>
+                <button id="btnAiDefenseAdvice" class="btn-radar-ai">
+                    <span class="btn-icon">🤖</span> AI Brand Defense Advisory
+                </button>
+            </div>
+
+            <!-- ===== RADAR LOADING ===== -->
+            <div id="radarLoading" class="loading hidden">
+                <div class="spinner"></div>
+                <span id="radarStatusText">Permutating homoglyphs, bit-squats &amp; keyword stack variants…</span>
+            </div>
+
+            <!-- ===== RADAR RESULTS AREA ===== -->
+            <div id="radarResultArea" class="result-area"></div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 5: SECURITY AWARENESS LAB (SIMULATOR)                 -->
         <!-- ========================================================= -->
         <div id="simulatorTab" class="tab-content">
             <section class="card sim-intro-card">

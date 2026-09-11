@@ -42,6 +42,11 @@
     let simStats = { attempted: 0, correct: 0 };
     let simAnswers = {};
 
+    // Radar State
+    let radarCurrentResults = null;
+    let radarFilterCategory = 'all';
+    let radarSearchQuery = '';
+
     // ================================================================
     //  SAMPLE PRESETS
     // ================================================================
@@ -334,6 +339,16 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
         qrPreviewImg:          $('#qrPreviewImg'),
         qrDecodedPayload:      $('#qrDecodedPayload'),
         qrDropPrompt:          $('#qrDropPrompt'),
+
+        // -- Brand Lookalike & Typosquat Radar --
+        radarDomainInput:      $('#radarDomainInput'),
+        btnGenerateRadar:      $('#btnGenerateRadar'),
+        btnAiDefenseAdvice:    $('#btnAiDefenseAdvice'),
+        clearRadarBtn:         $('#clearRadarBtn'),
+        radarLoading:          $('#radarLoading'),
+        radarStatusText:       $('#radarStatusText'),
+        radarResultArea:       $('#radarResultArea'),
+        radarPresetBtns:       $$('.btn-radar-preset'),
     };
 
     // ================================================================
@@ -425,6 +440,37 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     }
     if (dom.btnResetSimulator) {
         dom.btnResetSimulator.addEventListener('click', resetSimulator);
+    }
+
+    // Wire Radar actions & preset buttons
+    if (dom.btnGenerateRadar) {
+        dom.btnGenerateRadar.addEventListener('click', handleRadarGenerate);
+    }
+    if (dom.btnAiDefenseAdvice) {
+        dom.btnAiDefenseAdvice.addEventListener('click', handleRadarAiDefense);
+    }
+    if (dom.clearRadarBtn) {
+        dom.clearRadarBtn.addEventListener('click', () => {
+            dom.radarDomainInput.value = '';
+            if (dom.radarResultArea) dom.radarResultArea.innerHTML = '';
+            radarCurrentResults = null;
+        });
+    }
+    if (dom.radarDomainInput) {
+        dom.radarDomainInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleRadarGenerate();
+        });
+    }
+    if (dom.radarPresetBtns) {
+        dom.radarPresetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const brand = btn.dataset.brand;
+                if (brand && dom.radarDomainInput) {
+                    dom.radarDomainInput.value = brand;
+                    handleRadarGenerate();
+                }
+            });
+        });
     }
 
     // Sync provider UI on load
@@ -2529,11 +2575,586 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
         }
     }
 
+    // ================================================================
+    //  TAB 4: BRAND LOOKALIKE & TYPOSQUAT RADAR ENGINE
+    // ================================================================
+    function handleRadarGenerate() {
+        if (!dom.radarDomainInput) return;
+        const raw = dom.radarDomainInput.value.trim();
+        if (!raw) {
+            showRadarError('Please enter a target domain name (e.g. acmecorp.com or paypal.com).');
+            return;
+        }
+
+        setRadarLoading(true, 'Permutating homoglyphs, bit-squats & brand keyword stack variants…');
+        setTimeout(() => {
+            try {
+                const results = generateRadarLookalikes(raw);
+                radarCurrentResults = results;
+                radarFilterCategory = 'all';
+                radarSearchQuery = '';
+                renderRadarResults(results);
+            } catch (err) {
+                showRadarError('Error generating lookalikes: ' + err.message);
+            } finally {
+                setRadarLoading(false);
+            }
+        }, 80);
+    }
+
+    function setRadarLoading(on, text = '') {
+        if (dom.radarLoading) dom.radarLoading.classList.toggle('hidden', !on);
+        if (dom.radarStatusText && text) dom.radarStatusText.textContent = text;
+        if (dom.btnGenerateRadar) dom.btnGenerateRadar.disabled = on;
+        if (dom.btnAiDefenseAdvice) dom.btnAiDefenseAdvice.disabled = on;
+    }
+
+    function showRadarError(msg) {
+        if (dom.radarResultArea) {
+            dom.radarResultArea.innerHTML = '<div class="error-box">⚠️ ' + escapeHtml(msg) + '</div>';
+        }
+    }
+
+    function parseDomainTarget(input) {
+        let clean = input.trim().toLowerCase();
+        clean = clean.replace(/^[a-z]+:\/\//i, '');
+        clean = clean.split('/')[0].split(':')[0].split('?')[0].split('#')[0];
+        clean = clean.replace(/^www\./i, '');
+
+        const parts = clean.split('.');
+        if (parts.length < 2) {
+            return { raw: clean, label: clean, tld: 'com', full: clean + '.com' };
+        }
+
+        const MULTI_TLDS = ['co.uk', 'com.au', 'co.nz', 'co.jp', 'com.br', 'gov.uk', 'ac.uk', 'org.uk'];
+        const lastTwo = parts.slice(-2).join('.');
+        if (MULTI_TLDS.includes(lastTwo) && parts.length > 2) {
+            const tld = lastTwo;
+            const label = parts.slice(0, -2).join('.');
+            return { raw: clean, label, tld, full: label + '.' + tld };
+        }
+
+        const tld = parts.pop();
+        const label = parts.join('.');
+        return { raw: clean, label, tld, full: label + '.' + tld };
+    }
+
+    function generateRadarLookalikes(rawInput) {
+        const parsed = parseDomainTarget(rawInput);
+        const name = parsed.label;
+        const origTld = parsed.tld;
+        const variants = [];
+        const seen = new Set();
+
+        function addVariant(item) {
+            const key = item.domain.toLowerCase();
+            if (key === parsed.full.toLowerCase() || seen.has(key)) return;
+            seen.add(key);
+
+            let puny = '';
+            if (/[^\u0020-\u007E]/.test(item.domain)) {
+                try {
+                    const labelPart = item.domain.split('.')[0];
+                    const tldPart = item.domain.split('.').slice(1).join('.');
+                    puny = punycodeEncode(labelPart) + '.' + tldPart;
+                } catch (e) {
+                    puny = item.domain;
+                }
+            }
+            item.punycode = puny;
+            variants.push(item);
+        }
+
+        // 1. Homoglyphs (Cyrillic, Greek lookalikes)
+        const HOMOGLYPH_MAP = {
+            'a': ['а', 'à', 'á'],
+            'c': ['с'],
+            'e': ['е', 'é', 'è'],
+            'i': ['і', '1', 'l'],
+            'j': ['ј'],
+            'l': ['1', 'i'],
+            'o': ['о', '0'],
+            'p': ['р'],
+            's': ['ѕ', '5'],
+            'u': ['υ'],
+            'v': ['ν'],
+            'x': ['х'],
+            'y': ['у']
+        };
+
+        for (let i = 0; i < name.length; i++) {
+            const ch = name[i];
+            const replacements = HOMOGLYPH_MAP[ch];
+            if (replacements) {
+                replacements.forEach(r => {
+                    const sub = name.substring(0, i) + r + name.substring(i + 1);
+                    addVariant({
+                        domain: sub + '.' + origTld,
+                        category: 'homoglyph',
+                        categoryLabel: 'Homoglyph Lookalike',
+                        risk: 'critical',
+                        riskLabel: 'Critical',
+                        score: 95,
+                        desc: `Visual spoof: Replaced '${ch}' at pos ${i+1} with '${r}' (IDN Homograph)`
+                    });
+                });
+            }
+        }
+
+        // 2. High-Risk Abusive TLD Swapping
+        const HIGH_RISK_TLDS = ['top', 'xyz', 'cfd', 'click', 'zip', 'su', 'rest', 'cam', 'buzz', 'pw', 'online', 'cloud'];
+        HIGH_RISK_TLDS.forEach(tld => {
+            if (tld !== origTld) {
+                addVariant({
+                    domain: name + '.' + tld,
+                    category: 'tld-swap',
+                    categoryLabel: 'High-Risk TLD Swap',
+                    risk: 'high',
+                    riskLabel: 'High',
+                    score: 82,
+                    desc: `Brand name registered under known high-abuse phishing TLD (.${tld})`
+                });
+            }
+        });
+
+        // 3. Brand Keyword Stacking
+        const CRITICAL_KEYWORDS = ['login', 'sso', 'auth', 'verify', 'portal', 'security', 'mfa', 'support', 'update', 'account'];
+        CRITICAL_KEYWORDS.forEach(kw => {
+            addVariant({
+                domain: `${name}-${kw}.${origTld}`,
+                category: 'keyword',
+                categoryLabel: 'Keyword Stacking',
+                risk: 'critical',
+                riskLabel: 'Critical',
+                score: 88,
+                desc: `Hyphenated phishing lure target: ${name}-${kw}`
+            });
+            addVariant({
+                domain: `${kw}-${name}.${origTld}`,
+                category: 'keyword',
+                categoryLabel: 'Keyword Stacking',
+                risk: 'critical',
+                riskLabel: 'Critical',
+                score: 86,
+                desc: `Prefixed credential harvest lure: ${kw}-${name}`
+            });
+            addVariant({
+                domain: `${name}-${kw}.top`,
+                category: 'keyword',
+                categoryLabel: 'Keyword + Abusive TLD',
+                risk: 'critical',
+                riskLabel: 'Critical',
+                score: 96,
+                desc: `High-threat combo: credential lure '${kw}' hosted on abusive .top TLD`
+            });
+        });
+        // 4. Character Omission
+        for (let i = 0; i < name.length; i++) {
+            if (name.length > 3) {
+                const omitted = name.substring(0, i) + name.substring(i + 1);
+                addVariant({
+                    domain: omitted + '.' + origTld,
+                    category: 'omission-swap',
+                    categoryLabel: 'Character Omission',
+                    risk: 'medium',
+                    riskLabel: 'Medium',
+                    score: 65,
+                    desc: `Typosquatting: Omitted '${name[i]}' at pos ${i+1}`
+                });
+            }
+        }
+
+        // 5. Adjacent Transposition
+        for (let i = 0; i < name.length - 1; i++) {
+            if (name[i] !== name[i + 1]) {
+                const transposed = name.substring(0, i) + name[i + 1] + name[i] + name.substring(i + 2);
+                addVariant({
+                    domain: transposed + '.' + origTld,
+                    category: 'omission-swap',
+                    categoryLabel: 'Adjacent Transposition',
+                    risk: 'medium',
+                    riskLabel: 'Medium',
+                    score: 68,
+                    desc: `Fat-finger typo: Swapped '${name[i]}' and '${name[i+1]}'`
+                });
+            }
+        }
+
+        // 6. Character Repetition
+        for (let i = 0; i < name.length; i++) {
+            const repeated = name.substring(0, i) + name[i] + name[i] + name.substring(i + 1);
+            addVariant({
+                domain: repeated + '.' + origTld,
+                category: 'omission-swap',
+                categoryLabel: 'Character Repetition',
+                risk: 'low',
+                riskLabel: 'Low',
+                score: 45,
+                desc: `Keyboard stutter: Repeated character '${name[i]}'`
+            });
+        }
+
+        // 7. Bit-Squatting
+        for (let i = 0; i < name.length; i++) {
+            const code = name.charCodeAt(i);
+            for (let bit = 0; bit < 8; bit++) {
+                const flippedCode = code ^ (1 << bit);
+                const flippedChar = String.fromCharCode(flippedCode).toLowerCase();
+                if (/^[a-z0-9-]$/.test(flippedChar) && flippedChar !== name[i]) {
+                    const bitsquat = name.substring(0, i) + flippedChar + name.substring(i + 1);
+                    addVariant({
+                        domain: bitsquat + '.' + origTld,
+                        category: 'bitsquat',
+                        categoryLabel: 'Bit-Squatting',
+                        risk: 'medium',
+                        riskLabel: 'Medium',
+                        score: 60,
+                        desc: `Bit flip: 0x${code.toString(16)} -> 0x${flippedCode.toString(16)} ('${name[i]}' -> '${flippedChar}')`
+                    });
+                }
+            }
+        }
+
+        variants.sort((a, b) => b.score - a.score);
+
+        const stats = {
+            total: variants.length,
+            critical: variants.filter(v => v.risk === 'critical').length,
+            high: variants.filter(v => v.risk === 'high').length,
+            homoglyphs: variants.filter(v => v.category === 'homoglyph').length,
+            tldSwaps: variants.filter(v => v.category === 'tld-swap').length,
+            keywords: variants.filter(v => v.category === 'keyword').length,
+            omissions: variants.filter(v => v.category === 'omission-swap').length,
+            bitsquats: variants.filter(v => v.category === 'bitsquat').length
+        };
+
+        return { target: parsed, stats, variants };
+    }
 
 
+
+
+
+    function renderRadarResults(data) {
+        if (!dom.radarResultArea) return;
+        const st = data.stats;
+
+        let html = '<div class="radar-stats-grid">'
+                 + '  <div class="radar-stat-box"><span class="radar-stat-lbl">Total Lookalikes</span><span class="radar-stat-num cyan-stat">' + st.total + '</span></div>'
+                 + '  <div class="radar-stat-box"><span class="radar-stat-lbl">Critical / High</span><span class="radar-stat-num critical-stat">' + (st.critical + st.high) + '</span></div>'
+                 + '  <div class="radar-stat-box"><span class="radar-stat-lbl">Homoglyphs (IDN)</span><span class="radar-stat-num warn-stat">' + st.homoglyphs + '</span></div>'
+                 + '  <div class="radar-stat-box"><span class="radar-stat-lbl">Abusive TLD Swaps</span><span class="radar-stat-num">' + st.tldSwaps + '</span></div>'
+                 + '</div>';
+
+        html += '<div id="radarAiContainer"></div>';
+
+        html += '<div class="radar-controls-card">'
+              + '  <div class="radar-filter-pills" id="radarFilterPills">'
+              + '    <button type="button" class="radar-pill-btn active" data-filter="all">All (' + st.total + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="critical">🚨 Critical (' + st.critical + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="homoglyph">🔤 Homoglyphs (' + st.homoglyphs + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="keyword">🔑 Keyword Stacking (' + st.keywords + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="tld-swap">🌐 TLD Swaps (' + st.tldSwaps + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="omission-swap">🔀 Typos &amp; Swaps (' + st.omissions + ')</button>'
+              + '    <button type="button" class="radar-pill-btn" data-filter="bitsquat">⚡ Bit-Squats (' + st.bitsquats + ')</button>'
+              + '  </div>'
+              + '  <input type="text" id="radarSearchBox" class="radar-search-input" placeholder="🔍 Search variants...">'
+              + '</div>';
+
+        html += '<div class="radar-table-container">'
+              + '  <table class="radar-table">'
+              + '    <thead>'
+              + '      <tr>'
+              + '        <th>Candidate Domain &amp; IDN Punycode</th>'
+              + '        <th>Technique</th>'
+              + '        <th>Threat Description</th>'
+              + '        <th>Risk Tier</th>'
+              + '        <th style="text-align:right;">Action</th>'
+              + '      </tr>'
+              + '    </thead>'
+              + '    <tbody id="radarTableBody"></tbody>'
+              + '  </table>'
+              + '</div>';
+
+        html += '<div class="export-actions-row">'
+              + '  <button type="button" class="btn-export" id="btnCopyRadarList">📋 Copy Domain List</button>'
+              + '  <button type="button" class="btn-export" id="btnExportDnsBlocklist">🛡️ Export DNS Blocklist (.txt)</button>'
+              + '  <button type="button" class="btn-export" id="btnExportRadarCsv">📊 Export Threat Intel (.csv)</button>'
+              + '</div>';
+
+        dom.radarResultArea.innerHTML = html;
+
+        filterAndRenderRadarTable();
+
+        const pills = $$('.radar-pill-btn');
+        pills.forEach(p => {
+            p.addEventListener('click', () => {
+                pills.forEach(b => b.classList.remove('active'));
+                p.classList.add('active');
+                radarFilterCategory = p.dataset.filter;
+                filterAndRenderRadarTable();
+            });
+        });
+
+        const searchBox = $('#radarSearchBox');
+        if (searchBox) {
+            searchBox.addEventListener('input', (e) => {
+                radarSearchQuery = e.target.value.trim().toLowerCase();
+                filterAndRenderRadarTable();
+            });
+        }
+
+        const copyBtn = $('#btnCopyRadarList');
+        if (copyBtn) copyBtn.addEventListener('click', copyRadarDomainList);
+
+        const dnsBtn = $('#btnExportDnsBlocklist');
+        if (dnsBtn) dnsBtn.addEventListener('click', exportRadarDnsBlocklist);
+
+        const csvBtn = $('#btnExportRadarCsv');
+        if (csvBtn) csvBtn.addEventListener('click', exportRadarCsv);
+    }
+
+    function filterAndRenderRadarTable() {
+        if (!radarCurrentResults) return;
+        const tbody = $('#radarTableBody');
+        if (!tbody) return;
+
+        let filtered = radarCurrentResults.variants;
+        if (radarFilterCategory === 'critical') {
+            filtered = filtered.filter(v => v.risk === 'critical');
+        } else if (radarFilterCategory !== 'all') {
+            filtered = filtered.filter(v => v.category === radarFilterCategory);
+        }
+
+        if (radarSearchQuery) {
+            filtered = filtered.filter(v =>
+                v.domain.toLowerCase().includes(radarSearchQuery) ||
+                (v.punycode && v.punycode.toLowerCase().includes(radarSearchQuery)) ||
+                v.desc.toLowerCase().includes(radarSearchQuery)
+            );
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:#6b7280;">No lookalike variants match the selected filter.</td></tr>';
+            return;
+        }
+
+        let rowsHtml = '';
+        filtered.forEach(item => {
+            const riskClass = 'radar-risk-' + item.risk;
+            rowsHtml += '<tr>'
+                      + '  <td class="radar-domain-cell">'
+                      + '    ' + escapeHtml(item.domain)
+                      +      (item.punycode ? '<span class="radar-punycode-text">Punycode: ' + escapeHtml(item.punycode) + '</span>' : '')
+                      + '  </td>'
+                      + '  <td><span class="radar-tech-badge">' + escapeHtml(item.categoryLabel) + '</span></td>'
+                      + '  <td>' + escapeHtml(item.desc) + '</td>'
+                      + '  <td><span class="radar-risk-badge ' + riskClass + '">' + escapeHtml(item.riskLabel) + '</span></td>'
+                      + '  <td class="radar-copy-cell"><button type="button" class="radar-copy-btn" data-copy="' + escapeHtml(item.domain) + '">Copy</button></td>'
+                      + '</tr>';
+        });
+
+        tbody.innerHTML = rowsHtml;
+
+        tbody.querySelectorAll('.radar-copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const text = btn.dataset.copy;
+                navigator.clipboard.writeText(text).then(() => {
+                    const orig = btn.textContent;
+                    btn.textContent = '✓';
+                    btn.style.color = '#00ff9c';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.color = '';
+                    }, 1200);
+                });
+            });
+        });
+    }
 
     // ================================================================
     //  EXPORT REPORT HELPERS
+    async function handleRadarAiDefense() {
+        if (!radarCurrentResults) {
+            handleRadarGenerate();
+            if (!radarCurrentResults) return;
+        }
+
+        const data = radarCurrentResults;
+        const target = data.target.full;
+        const criticals = data.variants.filter(v => v.risk === 'critical').slice(0, 10).map(v => v.domain + (v.punycode ? ' (' + v.punycode + ')' : ''));
+
+        const aiContainer = $('#radarAiContainer');
+        if (aiContainer) {
+            aiContainer.innerHTML = '<div class="radar-ai-card"><div class="radar-ai-header"><span class="radar-ai-title">🤖 AI Brand Defense Advisory</span><span style="font-size:0.8rem; color:#8b949e;">Generating tailored strategy…</span></div><div class="loading" style="padding:16px 0;"><div class="spinner"></div><span>Synthesizing brand protection strategy and monitoring dorks…</span></div></div>';
+        }
+
+        setRadarLoading(true, 'Synthesizing proactive brand defense strategy…');
+
+        const prompt = `You are a Principal Threat Intelligence Analyst & Brand Protection Specialist.
+Analyze the target brand domain "${target}" and the following critical typosquat/lookalike candidates:
+${criticals.join('\n')}
+
+Provide an actionable, structured Brand Defense & Anti-Phishing Dossier covering:
+1. 🛡️ TOP DEFENSIVE ACQUISITIONS & MONITORING: High-priority lookalikes to defensively register or add to Certificate Transparency (CT) log monitors.
+2. 🔒 EMAIL & DNS REPUTATION HARDENING: Key requirements for DMARC (p=reject), SPF strict alignment, DKIM selector rotation, and CAA/BIMI authentication.
+3. 🔎 PROACTIVE THREAT HUNTING DORKS: 3-4 precise Google / Shodan / URLScan search dorks to detect phishing kits and fake login clones targeting this brand.
+4. 👥 EMPLOYEE / CUSTOMER DEFENSE ADVISORY: Specific visual traps and cues to include in corporate security awareness briefings.
+
+Be concise, authoritative, and practical. Format with clear headings and bullet points.`;
+
+        let adviceText = '';
+        try {
+            if (aiProvider === 'gemini' && apiKey) {
+                adviceText = await callGeminiBrandAdvice(prompt);
+            } else if (aiProvider === 'openai' && apiKey) {
+                adviceText = await callOpenAiBrandAdvice(prompt);
+            } else {
+                adviceText = generateLocalBrandAdvice(data);
+            }
+        } catch (err) {
+            adviceText = generateLocalBrandAdvice(data);
+        } finally {
+            setRadarLoading(false);
+        }
+
+        if (aiContainer) {
+            aiContainer.innerHTML = '<div class="radar-ai-card">'
+                                  + '<div class="radar-ai-header">'
+                                  + '  <span class="radar-ai-title">🤖 AI Brand Defense &amp; Anti-Phishing Advisory (' + escapeHtml(aiProvider === 'gemini' ? 'Google Gemini' : aiProvider === 'openai' ? 'OpenAI GPT-4o-mini' : 'Built-in Heuristic SOC') + ')</span>'
+                                  + '  <button type="button" class="btn-link" id="btnCopyAiAdvice" style="font-size:0.78rem;">Copy Advice</button>'
+                                  + '</div>'
+                                  + '<div class="radar-ai-content">' + escapeHtml(adviceText) + '</div>'
+                                  + '</div>';
+
+            const copyAdviceBtn = $('#btnCopyAiAdvice');
+            if (copyAdviceBtn) {
+                copyAdviceBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(adviceText).then(() => {
+                        const orig = copyAdviceBtn.textContent;
+                        copyAdviceBtn.textContent = '✅ Copied!';
+                        setTimeout(() => { copyAdviceBtn.textContent = orig; }, 1500);
+                    });
+                });
+            }
+        }
+    }
+    async function callGeminiBrandAdvice(prompt) {
+        const url = `${GEMINI_ENDPOINT}?key=${apiKey}`;
+        const body = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 1000 }
+        };
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+        const json = await res.json();
+        return json.candidates[0].content.parts[0].text;
+    }
+
+    async function callOpenAiBrandAdvice(prompt) {
+        const res = await fetch(OPENAI_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.2,
+                max_tokens: 1000
+            })
+        });
+        if (!res.ok) throw new Error(`OpenAI API error: ${res.status}`);
+        const json = await res.json();
+        return json.choices[0].message.content;
+    }
+
+    function generateLocalBrandAdvice(data) {
+        const target = data.target.full;
+        const brand = data.target.label;
+        const topCriticals = data.variants.filter(v => v.risk === 'critical').slice(0, 5).map(v => v.domain).join(', ');
+
+        return `## 🛡️ Brand Defense & Anti-Typosquatting Dossier for ${target}\n\n`
+             + `### 1. High-Priority Defensive Acquisitions & CT Log Monitoring\n`
+             + `- **Immediate Threat Vectors:** Register or monitor top credential keyword combinations (${topCriticals}).\n`
+             + `- **Certificate Transparency (CT) Alerts:** Subscribe to CertStream or crt.sh alerts for new SSL/TLS certificates matching "*${brand}*".\n`
+             + `- **Takedown Escalation:** Flag abusive registrar accounts hosting homoglyphic punycode clones under UDRP / Uniform Rapid Suspension.\n\n`
+             + `### 2. Email & DNS Authentication Posture\n`
+             + `- **DMARC Enforcement:** Set policy to strict rejection: \`v=DMARC1; p=reject; sp=reject; pct=100; rua=mailto:dmarc-reports@${target};\`\n`
+             + `- **SPF Hardfail Alignment:** Disallow unauthorized envelope-from IPs with \`-all\` rather than softfail (\`~all\`).\n`
+             + `- **DKIM & BIMI:** Implement 2048-bit DKIM keys and verified Brand Indicators for Message Identification (BIMI) to ensure visual mailbox verification.\n\n`
+             + `### 3. Proactive Phishing Kit Threat Hunting Dorks\n`
+             + `- \`intitle:"${brand} Login" inurl:(login OR signin OR auth) -site:${target}\`\n`
+             + `- \`"${brand}" "Sign In to Your Account" (filetype:php OR filetype:html) -site:${target}\`\n`
+             + `- \`http.html:"${brand}" AND NOT http.domain:"${target}"\` (via URLScan / Shodan)\n\n`
+             + `### 4. Employee & User Defense Briefing\n`
+             + `- Train employees to scrutinize subdomains (e.g. noticing \`${brand}.com.attacker-gateway.top\` is NOT an authentic ${target} asset).\n`
+             + `- Mandate FIDO2 / WebAuthn hardware security keys, which are mathematically immune to typosquatting and AitM reverse proxies.`;
+    }
+
+    function copyRadarDomainList() {
+        if (!radarCurrentResults) return;
+        const domains = radarCurrentResults.variants.map(v => v.domain).join('\n');
+        const btn = $('#btnCopyRadarList');
+        navigator.clipboard.writeText(domains).then(() => {
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied ' + radarCurrentResults.variants.length + ' Domains!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            }
+        });
+    }
+
+    function exportRadarDnsBlocklist() {
+        if (!radarCurrentResults) return;
+        const target = radarCurrentResults.target.full;
+        let content = `# Phish-Guard DNS / Hosts Blocklist for ${target}\n`;
+        content += `# Generated: ${new Date().toISOString()}\n`;
+        content += `# Total Permutations: ${radarCurrentResults.variants.length}\n\n`;
+        radarCurrentResults.variants.forEach(v => {
+            content += `0.0.0.0 ${v.domain}\n`;
+            if (v.punycode && v.punycode !== v.domain) {
+                content += `0.0.0.0 ${v.punycode}\n`;
+            }
+        });
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phishguard-blocklist-${target}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function exportRadarCsv() {
+        if (!radarCurrentResults) return;
+        const target = radarCurrentResults.target.full;
+        let csv = 'Domain,Punycode,Category,Risk_Tier,Risk_Score,Threat_Description\n';
+        radarCurrentResults.variants.forEach(v => {
+            const desc = (v.desc || '').replace(/"/g, '""');
+            csv += `"${v.domain}","${v.punycode || ''}","${v.categoryLabel}","${v.riskLabel}",${v.score},"${desc}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phishguard-lookalikes-${target}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+
     // ================================================================
     function generateMarkdownReport() {
         if (!lastScanData) return '';
