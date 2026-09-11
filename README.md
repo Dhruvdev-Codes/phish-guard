@@ -148,4 +148,4 @@ phish-guard/
 
 ---
 
-**Author:** [Dhruv](https://github.com/Dhruvdev-Codes)
+**Author:** [Dhruv](https://github.com/Dhruvdev-Codes) | [LinkedIn](https://www.linkedin.com/in/dhruv-upadhyay-b7711a216)
