@@ -1,21 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Phish-Guard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phish-Guard | AI-Powered Phishing Analyzer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Phish-Guard Analyzer</h1>
-        <p>Paste a suspicious email or text message below:</p>
-        
-        <textarea id="emailInput" rows="10" cols="50" placeholder="Paste the suspicious message here..."></textarea>
-        <br><br>
-        
-        <button id="scanButton">Scan for Threats</button>
 
-        <h2>Analysis Results:</h2>
-        <p id="resultArea">Waiting for input...</p>
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <div class="logo">🛡️</div>
+            <h1>Phish-Guard</h1>
+            <p class="tagline">AI-Powered Social Engineering Analyzer</p>
+        </header>
+
+        <!-- ===== API KEYS (collapsible) ===== -->
+        <section class="card">
+            <button id="keyToggle" class="key-toggle">
+                ⚙️ API Configuration <span class="arrow">▼</span>
+            </button>
+            <div id="keyPanel" class="key-panel">
+                <div class="key-row">
+                    <div class="key-group">
+                        <label for="openaiKey">OpenAI API Key <span class="req">*</span></label>
+                        <input type="password" id="openaiKey" placeholder="sk-..." autocomplete="off">
+                        <small>Required — powers the phishing analysis engine</small>
+                    </div>
+                    <div class="key-group">
+                        <label for="vtKey">VirusTotal API Key <span class="opt">(optional)</span></label>
+                        <input type="password" id="vtKey" placeholder="Enter VT key..." autocomplete="off">
+                        <small>Enables URL reputation scanning</small>
+                    </div>
+                </div>
+                <div class="security-note">
+                    🔒 Keys are held in browser memory <strong>only</strong>. They are never saved to disk,
+                    localStorage, or any external server.
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== MESSAGE INPUT ===== -->
+        <section class="card">
+            <label for="messageInput" class="card-label">Suspicious Message</label>
+            <textarea id="messageInput" rows="10"
+                placeholder="Paste a suspicious email, SMS, or social-engineering message here...&#10;&#10;Example:&#10;URGENT: Your bank account has been compromised. Click http://secure-bank-login.xyz/verify immediately or your account will be permanently closed."></textarea>
+        </section>
+
+        <!-- ===== SCAN BUTTON ===== -->
+        <button id="scanButton" class="btn-scan">
+            <span class="btn-icon">🔍</span> Scan for Threats
+        </button>
+
+        <!-- ===== LOADING / STATUS ===== -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <span id="statusText">Initializing…</span>
+        </div>
+
+        <!-- ===== RESULTS ===== -->
+        <div id="resultArea" class="result-area"></div>
+
+        <!-- ===== FOOTER ===== -->
+        <footer class="footer">
+            <p>B.Tech 4th-Year Cybersecurity &amp; AI Capstone Project</p>
+            <p>
+                <a href="https://github.com/Dhruvdev-Codes/phish-guard" target="_blank" rel="noopener">
+                    GitHub Repository
+                </a>
+            </p>
+        </footer>
     </div>
 
     <script src="app.js"></script>
