@@ -17,6 +17,7 @@
     let apiKey     = '';
     let vtKey      = '';
     let lastScanData = null;
+    let lastHeaderScanData = null;
 
     const PROVIDER_META = {
         gemini: {
@@ -51,6 +52,76 @@
         creds: "IT Helpdesk Notice: Your Microsoft 365 enterprise password expires in 2 hours. Failure to validate credentials will result in immediate revocation of your corporate email and VPN access. Keep your existing password by confirming here: https://login-microsoftonline.account-update.top/auth",
         payroll: "HR Compensation Notice: An unadjusted Q3 performance bonus of $1,450.00 is pending approval for your employee profile. You must review and confirm your direct deposit details before 5:00 PM today to receive disbursement: https://workday-payroll-portal.click/claim-bonus",
         legit: "Hi team,\n\nJust a quick reminder about our Q3 Project Review tomorrow at 2:00 PM in Conference Room B. Please review the attached slide deck in our shared Google Drive folder prior to the call.\n\nBest regards,\nSarah Jenkins\nProject Lead"
+    };
+
+    // ================================================================
+    //  EMAIL HEADER SAMPLE PRESETS
+    // ================================================================
+    const HEADER_SAMPLES = {
+        spoofedPaypal: `Received: from mail-out-relay.bulletproof-vps.su (unknown [185.220.101.5])
+    by mx.destination-corp.com (Postfix) with ESMTPS id 4T3K7h9QvRz
+    for <victim@destination-corp.com>; Thu, 10 Sep 2026 14:22:10 +0000
+Received-SPF: fail (destination-corp.com: domain of support@paypal.com does not designate 185.220.101.5 as permitted sender) receiver=destination-corp.com; client-ip=185.220.101.5; envelope-from="bounce@scam-relays.ru";
+Authentication-Results: destination-corp.com;
+    spf=fail (sender IP is 185.220.101.5) smtp.mailfrom=bounce@scam-relays.ru;
+    dkim=none (no signature found);
+    dmarc=fail (p=reject sp=reject dis=reject) header.from=paypal.com
+From: "PayPal Security Dept" <support@paypal.com>
+To: <victim@destination-corp.com>
+Reply-To: <verify-resolution-center@secure-payment-cases.com>
+Return-Path: <bounce@scam-relays.ru>
+Subject: URGENT: Your PayPal Account Has Been Suspended - Case #PP-9942
+Date: Thu, 10 Sep 2026 14:21:48 +0000
+Message-ID: <20260910142148.883921.qmail@bulletproof-vps.su>
+X-Originating-IP: [185.220.101.5]
+Content-Type: text/html; charset=UTF-8`,
+
+        ceoReplyTo: `Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
+    by mx.target-enterprise.com (Postfix) with ESMTPS id 8R91K28x
+    for <finance-team@target-enterprise.com>; Fri, 11 Sep 2026 09:15:02 -0400
+Received-SPF: softfail (target-enterprise.com: transitioning domain does not designate 209.85.216.54 as permitted sender) client-ip=209.85.216.54;
+Authentication-Results: target-enterprise.com;
+    spf=softfail smtp.mailfrom=ceo@target-enterprise.com;
+    dkim=none;
+    dmarc=none
+From: "David Miller (CEO)" <ceo@target-enterprise.com>
+To: <finance-team@target-enterprise.com>
+Reply-To: <david.miller.exec.confidential@protonmail.com>
+Return-Path: <ceo@target-enterprise.com>
+Subject: Quick Task - Confidential Vendor Wire Transfer
+Date: Fri, 11 Sep 2026 09:14:30 -0400
+Message-ID: <CA+V30_28198fjjkd018274@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8`,
+
+        m365Softfail: `Received: from out-relay-02.cloud-hoster-temp.net ([45.134.22.10])
+    by mx.corporate-gateway.net with ESMTP id 9B771A; Wed, 09 Sep 2026 11:02:14 +0200
+Received-SPF: softfail (corporate-gateway.net: domain of microsoft.com does not designate 45.134.22.10 as permitted sender) client-ip=45.134.22.10; envelope-from="noreply@vps-unverified.cloud";
+Authentication-Results: corporate-gateway.net;
+    spf=softfail smtp.mailfrom=noreply@vps-unverified.cloud;
+    dkim=fail reason="signature verification failed" header.d=microsoft.com;
+    dmarc=fail (p=quarantine) action=quarantine header.from=microsoft.com
+From: "Microsoft 365 Cloud Admin" <account-update@microsoft.com>
+To: <employee@corporate-gateway.net>
+Return-Path: <noreply@vps-unverified.cloud>
+Subject: Critical Notice: Microsoft 365 Security Credential Validation Required
+Date: Wed, 09 Sep 2026 11:01:45 +0200
+Message-ID: <019842.AA.991823@vps-unverified.cloud>`,
+
+        cleanGoogle: `Received: from mail-vs1-f48.google.com (mail-vs1-f48.google.com [209.85.217.48])
+    by mx.recipient-domain.com (Postfix) with ESMTPS id 3Z881KL
+    for <alex@recipient-domain.com>; Tue, 08 Sep 2026 16:40:11 +0000
+Received-SPF: pass (recipient-domain.com: domain of sarah@legit-company.com designates 209.85.217.48 as permitted sender) client-ip=209.85.217.48; envelope-from="sarah@legit-company.com";
+Authentication-Results: recipient-domain.com;
+    spf=pass smtp.mailfrom=sarah@legit-company.com;
+    dkim=pass header.i=@legit-company.com header.s=google;
+    dmarc=pass (p=reject sp=reject dis=none) header.from=legit-company.com
+DKIM-Signature: v=1; a=rsa-sha256; d=legit-company.com; s=google; bh=w781jk398a...; b=a8Kd991j...
+From: "Sarah Jenkins" <sarah@legit-company.com>
+To: <alex@recipient-domain.com>
+Return-Path: <sarah@legit-company.com>
+Subject: Q3 Project Review - Slides and Agenda attached
+Date: Tue, 08 Sep 2026 16:39:55 +0000
+Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     };
 
     // ================================================================
@@ -209,7 +280,16 @@
         loading:          $('#loading'),
         statusText:       $('#statusText'),
         resultArea:       $('#resultArea'),
-        sampleBtns:       $$('.btn-sample'),
+        sampleBtns:       $$('.btn-sample:not(.btn-header-sample)'),
+
+        // -- Email Header & Authentication Inspector --
+        headerInput:      $('#headerInput'),
+        analyzeHeaderBtn: $('#analyzeHeaderBtn'),
+        clearHeaderBtn:   $('#clearHeaderBtn'),
+        headerLoading:    $('#headerLoading'),
+        headerStatusText: $('#headerStatusText'),
+        headerResultArea: $('#headerResultArea'),
+        headerSampleBtns: $$('.btn-header-sample'),
 
         // -- Simulator (Security Awareness Lab) --
         simCurrentIndex:       $('#simCurrentIndex'),
@@ -255,6 +335,28 @@
                 dom.messageInput.value = SAMPLES[key];
                 clearResults();
                 dom.messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    });
+
+    // Wire email header sample buttons & actions
+    if (dom.analyzeHeaderBtn) {
+        dom.analyzeHeaderBtn.addEventListener('click', handleHeaderScan);
+    }
+    if (dom.clearHeaderBtn) {
+        dom.clearHeaderBtn.addEventListener('click', () => {
+            if (dom.headerInput) dom.headerInput.value = '';
+            clearHeaderResults();
+            if (dom.headerInput) dom.headerInput.focus();
+        });
+    }
+    dom.headerSampleBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.sample;
+            if (HEADER_SAMPLES[key] && dom.headerInput) {
+                dom.headerInput.value = HEADER_SAMPLES[key];
+                clearHeaderResults();
+                dom.headerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
     });
@@ -1246,6 +1348,596 @@ Return strictly valid JSON with this exact schema (no markdown fences):
         } finally {
             dom.btnGenerateChallenge.disabled = false;
             dom.btnGenerateChallenge.innerHTML = originalLabel;
+        }
+    }
+
+    // ================================================================
+    //  EMAIL HEADER & AUTHENTICATION INSPECTOR
+    // ================================================================
+    function setHeaderLoading(on) {
+        if (dom.analyzeHeaderBtn) dom.analyzeHeaderBtn.disabled = on;
+        if (dom.headerLoading) dom.headerLoading.classList.toggle('hidden', !on);
+    }
+
+    function setHeaderStatus(msg) {
+        if (dom.headerStatusText) dom.headerStatusText.textContent = msg;
+    }
+
+    function clearHeaderResults() {
+        if (dom.headerResultArea) dom.headerResultArea.innerHTML = '';
+        lastHeaderScanData = null;
+    }
+
+    function parseRawHeaders(rawText) {
+        const text = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const lines = text.split('\n');
+        const unfolded = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if ((line.startsWith(' ') || line.startsWith('\t')) && unfolded.length > 0) {
+                unfolded[unfolded.length - 1] += ' ' + line.trim();
+            } else if (line.trim() !== '') {
+                unfolded.push(line.trim());
+            }
+        }
+
+        const headers = {};
+        const multiHeaders = {
+            received: [],
+            'authentication-results': [],
+            'arc-authentication-results': [],
+            'dkim-signature': [],
+            'received-spf': []
+        };
+
+        unfolded.forEach(line => {
+            const colonIdx = line.indexOf(':');
+            if (colonIdx > 0) {
+                const key = line.substring(0, colonIdx).trim().toLowerCase();
+                const val = line.substring(colonIdx + 1).trim();
+                if (multiHeaders[key] !== undefined) {
+                    multiHeaders[key].push(val);
+                } else {
+                    headers[key] = val;
+                }
+            }
+        });
+
+        return {
+            raw: rawText,
+            headers,
+            multiHeaders,
+            from: headers['from'] || '',
+            to: headers['to'] || '',
+            replyTo: headers['reply-to'] || '',
+            returnPath: headers['return-path'] || '',
+            subject: headers['subject'] || '',
+            date: headers['date'] || '',
+            messageId: headers['message-id'] || '',
+            xOriginatingIp: headers['x-originating-ip'] || headers['x-sender-ip'] || ''
+        };
+    }
+
+    function extractEmailAddress(str) {
+        if (!str) return { displayName: '', email: '', domain: '' };
+        const match = str.match(/(?:"?([^"]*)"?\s*)?<?([a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}))>?/);
+        if (match) {
+            return {
+                displayName: (match[1] || '').trim(),
+                email: (match[2] || '').trim().toLowerCase(),
+                domain: (match[3] || '').trim().toLowerCase()
+            };
+        }
+        return { displayName: '', email: str.trim(), domain: '' };
+    }
+
+    function extractAuthResults(parsed) {
+        const authStrings = [
+            ...(parsed.multiHeaders['authentication-results'] || []),
+            ...(parsed.multiHeaders['arc-authentication-results'] || []),
+            ...(parsed.multiHeaders['received-spf'] || [])
+        ].join(' ');
+
+        let spf = 'none';
+        let spfDetails = 'No SPF authentication header found.';
+        const spfMatch = authStrings.match(/spf=(pass|fail|softfail|neutral|none|permerror|temperror)/i)
+                      || authStrings.match(/Received-SPF:\s*(pass|fail|softfail|neutral|none)/i);
+        if (spfMatch) {
+            spf = spfMatch[1].toLowerCase();
+            if (spf === 'pass') spfDetails = 'Sender IP is authorized in SPF DNS record.';
+            else if (spf === 'fail') spfDetails = 'Sender IP is explicitly NOT authorized (SPF Hardfail).';
+            else if (spf === 'softfail') spfDetails = 'Sender IP is questionable/not explicitly authorized (SPF Softfail ~all).';
+            else if (spf === 'neutral') spfDetails = 'SPF domain owner does not assert authorization (?all).';
+        }
+
+        let dkim = 'none';
+        let dkimDetails = 'No DKIM cryptographic signature header found.';
+        const dkimMatch = authStrings.match(/dkim=(pass|fail|neutral|none|invalid)/i);
+        if (dkimMatch) {
+            dkim = dkimMatch[1].toLowerCase();
+            if (dkim === 'pass') dkimDetails = 'DKIM signature valid and cryptographic digest matches.';
+            else if (dkim === 'fail' || dkim === 'invalid') dkimDetails = 'DKIM signature invalid, expired, or body modified in transit.';
+        } else if (parsed.multiHeaders['dkim-signature'] && parsed.multiHeaders['dkim-signature'].length > 0) {
+            dkim = 'present';
+            dkimDetails = 'DKIM signature present in header; receiver verification record absent.';
+        }
+
+        let dmarc = 'none';
+        let dmarcDetails = 'No DMARC policy evaluation found in authentication headers.';
+        const dmarcMatch = authStrings.match(/dmarc=(pass|fail|action|none)/i);
+        const policyMatch = authStrings.match(/p=(reject|quarantine|none)/i);
+        if (dmarcMatch) {
+            dmarc = dmarcMatch[1].toLowerCase();
+            const pol = policyMatch ? policyMatch[1] : 'none';
+            if (dmarc === 'pass') dmarcDetails = 'DMARC alignment passed (policy: ' + pol + ').';
+            else if (dmarc === 'fail') dmarcDetails = 'DMARC alignment failed (disposition: ' + pol + ').';
+        }
+
+        const fromParsed = extractEmailAddress(parsed.from);
+        const returnParsed = extractEmailAddress(parsed.returnPath);
+        const replyParsed = extractEmailAddress(parsed.replyTo);
+
+        let alignment = 'unknown';
+        let alignmentDetails = 'Cannot determine domain alignment.';
+        if (fromParsed.domain && returnParsed.domain) {
+            if (fromParsed.domain === returnParsed.domain || returnParsed.domain.endsWith('.' + fromParsed.domain) || fromParsed.domain.endsWith('.' + returnParsed.domain)) {
+                alignment = 'aligned';
+                alignmentDetails = 'Return-Path (@' + returnParsed.domain + ') matches From domain (@' + fromParsed.domain + ').';
+            } else {
+                alignment = 'mismatch';
+                alignmentDetails = 'Return-Path (@' + returnParsed.domain + ') diverges from From domain (@' + fromParsed.domain + '). Classic spoofing/relay indicator.';
+            }
+        }
+
+        return {
+            spf, spfDetails,
+            dkim, dkimDetails,
+            dmarc, dmarcDetails,
+            alignment, alignmentDetails,
+            fromParsed, returnParsed, replyParsed
+        };
+    }
+
+    function parseReceivedHops(multiReceived) {
+        if (!multiReceived || multiReceived.length === 0) return [];
+        const reversed = [...multiReceived].reverse();
+        return reversed.map((hopText, idx) => {
+            const fromMatch = hopText.match(/from\s+([^\s;]+)(?:\s+\((?:[^\)]*?\[?([0-9a-fA-F:.]+)\]?)\))?/i);
+            const byMatch = hopText.match(/by\s+([^\s;]+)/i);
+            const withMatch = hopText.match(/with\s+([^\s;]+)/i);
+            const dateMatch = hopText.match(/;\s*(.+)$/);
+
+            const fromHost = fromMatch ? fromMatch[1] : 'Unknown source';
+            const ip = fromMatch && fromMatch[2] ? fromMatch[2] : (hopText.match(/\[([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\]/) || [])[1] || '';
+            const byHost = byMatch ? byMatch[1] : 'MTA Relay';
+            const protocol = withMatch ? withMatch[1] : 'SMTP';
+            const timeStr = dateMatch ? dateMatch[1].trim() : '';
+
+            return {
+                step: idx + 1,
+                fromHost,
+                ip,
+                byHost,
+                protocol,
+                timeStr,
+                raw: hopText
+            };
+        });
+    }
+
+    function analyzeHeadersHeuristic(rawText) {
+        const parsed = parseRawHeaders(rawText);
+        const auth = extractAuthResults(parsed);
+        const hops = parseReceivedHops(parsed.multiHeaders.received);
+
+        const findings = [];
+        let riskScore = 10;
+        let isSpoofed = false;
+
+        const brandKeywords = ['paypal', 'microsoft', 'office 365', 'chase', 'apple', 'google', 'amazon', 'docusign', 'wellsfargo', 'bank of america', 'dhl', 'fedex', 'usps'];
+        const displayLower = (auth.fromParsed.displayName || '').toLowerCase();
+        const fromDomain = auth.fromParsed.domain || '';
+
+        const matchedBrand = brandKeywords.find(b => displayLower.includes(b));
+        if (matchedBrand) {
+            const safeBrandClean = matchedBrand.replace(/\s+/g, '');
+            if (!fromDomain.includes(safeBrandClean)) {
+                riskScore += 45;
+                isSpoofed = true;
+                findings.push({
+                    severity: 'danger',
+                    icon: '🚨',
+                    title: 'Display Name Brand Spoofing (' + matchedBrand.toUpperCase() + ')',
+                    detail: 'Display name claims "' + auth.fromParsed.displayName + '", but the originating domain is "@' + fromDomain + '". This is classic sender impersonation.'
+                });
+            }
+        }
+
+        if (auth.spf === 'fail') {
+            riskScore += 40;
+            findings.push({
+                severity: 'danger',
+                icon: '❌',
+                title: 'SPF Hardfail (Unauthorized Mail Server)',
+                detail: 'The transmitting IP is explicitly prohibited from sending mail on behalf of the declared domain.'
+            });
+        } else if (auth.spf === 'softfail') {
+            riskScore += 25;
+            findings.push({
+                severity: 'warn',
+                icon: '⚠️',
+                title: 'SPF Softfail (~all Violation)',
+                detail: 'The sender server is not designated as authorized in the DNS SPF record (~all).'
+            });
+        } else if (auth.spf === 'none') {
+            riskScore += 10;
+            findings.push({
+                severity: 'warn',
+                icon: 'ℹ️',
+                title: 'Missing SPF Authentication',
+                detail: 'No SPF evaluation result found. Recipient mail servers cannot verify sending MTA authenticity.'
+            });
+        }
+
+        if (auth.dkim === 'fail' || auth.dkim === 'invalid') {
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '❌',
+                title: 'DKIM Signature Verification Failed',
+                detail: 'Cryptographic DKIM signature failed verification. The email body or critical headers may have been altered or forged.'
+            });
+        }
+
+        if (auth.dmarc === 'fail') {
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '🚨',
+                title: 'DMARC Authentication Failed',
+                detail: 'Neither SPF nor DKIM passed in alignment with the From header domain. This message violates the published DMARC policy.'
+            });
+        }
+
+        if (auth.alignment === 'mismatch') {
+            riskScore += 25;
+            findings.push({
+                severity: 'warn',
+                icon: '🔄',
+                title: 'Envelope Return-Path / From Domain Mismatch',
+                detail: 'From header is "@' + auth.fromParsed.domain + '" while Return-Path bounce address routes to "@' + auth.returnParsed.domain + '".'
+            });
+        }
+
+        if (auth.replyParsed.email && auth.fromParsed.email && auth.replyParsed.domain !== auth.fromParsed.domain) {
+            riskScore += 35;
+            findings.push({
+                severity: 'danger',
+                icon: '🪤',
+                title: 'Reply-To Diversion (Hijacked Reply Channel)',
+                detail: 'Replies will NOT go to the sender (@' + auth.fromParsed.domain + ') but will be diverted to "' + auth.replyParsed.email + '". Classic BEC wire scam tactic.'
+            });
+        }
+
+        if (findings.length === 0 && auth.spf === 'pass' && (auth.dkim === 'pass' || auth.dkim === 'present') && (auth.dmarc === 'pass' || auth.alignment === 'aligned')) {
+            riskScore = 5;
+            findings.push({
+                severity: 'safe',
+                icon: '✅',
+                title: 'Full Cryptographic Authentication Passed',
+                detail: 'SPF and DKIM records are valid and fully aligned with the sender domain. No signs of sender forgery or relay hijacking.'
+            });
+        }
+
+        riskScore = Math.min(100, Math.max(0, riskScore));
+
+        let verdict = 'CLEAN & AUTHENTIC';
+        let verdictClass = 'verdict-clean';
+        if (riskScore >= 70 || isSpoofed) {
+            verdict = 'CRITICAL SPOOFING DETECTED';
+            verdictClass = 'verdict-phishing';
+        } else if (riskScore >= 40) {
+            verdict = 'SUSPICIOUS AUTHENTICATION';
+            verdictClass = 'verdict-suspicious';
+        }
+
+        return {
+            verdict,
+            verdictClass,
+            riskScore,
+            parsed,
+            auth,
+            hops,
+            findings,
+            engine: 'Local Heuristic Header Engine'
+        };
+    }
+
+    async function analyzeHeadersWithGemini(rawHeaders, key) {
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key);
+        const prompt = `You are a Principal Email Security & Forensic Analyst.
+Analyze the following raw email RFC 5322 headers for spoofing, SPF/DKIM/DMARC status, relay anomalies, and sender impersonation.
+Return ONLY valid JSON matching this schema:
+{
+  "verdict": "CRITICAL SPOOFING DETECTED" | "SUSPICIOUS AUTHENTICATION" | "CLEAN & AUTHENTIC",
+  "verdictClass": "verdict-phishing" | "verdict-suspicious" | "verdict-clean",
+  "riskScore": <integer 0-100>,
+  "summary": "<1-2 sentence executive forensic conclusion>",
+  "findings": [
+    {
+      "severity": "danger" | "warn" | "safe",
+      "icon": "🚨" | "⚠️" | "✅" | "❌",
+      "title": "<Short finding title>",
+      "detail": "<Explanation of why this indicator matters>"
+    }
+  ],
+  "recommendations": [
+    "<Actionable step for security team or user>"
+  ]
+}
+
+Raw Headers:
+${rawHeaders.substring(0, 5000)}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.1
+            }
+        };
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('Gemini Header API error (' + resp.status + '): ' + errText);
+        }
+
+        const data = await resp.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('Gemini returned an empty header analysis response.');
+        return JSON.parse(text);
+    }
+
+    async function analyzeHeadersWithOpenAI(rawHeaders, key) {
+        const prompt = `You are a Principal Email Security & Forensic Analyst.
+Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
+
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                temperature: 0.1,
+                messages: [
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: rawHeaders.substring(0, 5000) }
+                ],
+                response_format: { type: 'json_object' }
+            })
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('OpenAI Header API error (' + resp.status + '): ' + errText);
+        }
+
+        const data = await resp.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) throw new Error('OpenAI returned an empty response.');
+        return JSON.parse(content);
+    }
+
+    async function handleHeaderScan() {
+        const rawText = dom.headerInput ? dom.headerInput.value.trim() : '';
+        if (!rawText) {
+            alert('Please paste raw email headers or select a Header Test Case.');
+            return;
+        }
+
+        clearHeaderResults();
+        setHeaderLoading(true);
+        setHeaderStatus('Parsing email authentication & routing headers…');
+
+        try {
+            const heuristicResult = analyzeHeadersHeuristic(rawText);
+            let finalResult = heuristicResult;
+
+            if (aiProvider !== 'heuristic' && apiKey) {
+                setHeaderStatus('Running deep AI forensic analysis (' + (aiProvider === 'gemini' ? 'Gemini 1.5 Flash' : 'GPT-4o-mini') + ')…');
+                try {
+                    const aiData = aiProvider === 'openai'
+                        ? await analyzeHeadersWithOpenAI(rawText, apiKey)
+                        : await analyzeHeadersWithGemini(rawText, apiKey);
+
+                    if (aiData.findings && Array.isArray(aiData.findings) && aiData.findings.length) {
+                        heuristicResult.findings = aiData.findings;
+                    }
+                    if (typeof aiData.riskScore === 'number') heuristicResult.riskScore = aiData.riskScore;
+                    if (aiData.verdict) heuristicResult.verdict = aiData.verdict;
+                    if (aiData.verdictClass) heuristicResult.verdictClass = aiData.verdictClass;
+                    if (aiData.summary) heuristicResult.summary = aiData.summary;
+                    if (aiData.recommendations) heuristicResult.recommendations = aiData.recommendations;
+                    heuristicResult.engine = aiProvider === 'openai' ? 'OpenAI GPT-4o-mini + Local Parser' : 'Google Gemini 1.5 Flash + Local Parser';
+                } catch (aiErr) {
+                    console.warn('AI header forensic analysis failed, fallback to local heuristics:', aiErr);
+                }
+            }
+
+            lastHeaderScanData = {
+                timestamp: new Date().toISOString(),
+                engine: heuristicResult.engine,
+                data: heuristicResult
+            };
+
+            renderHeaderResults(heuristicResult);
+        } catch (err) {
+            console.error('Header analysis failed:', err);
+            dom.headerResultArea.innerHTML =
+                '<div class="error-box"><strong>Header Analysis Error:</strong> ' + escapeHtml(err.message || 'Failed to parse headers.') + '</div>';
+        } finally {
+            setHeaderLoading(false);
+        }
+    }
+
+    function renderHeaderResults(data) {
+        if (!dom.headerResultArea) return;
+        const auth = data.auth;
+        const parsed = data.parsed;
+        const hops = data.hops;
+
+        const getAuthBadge = (status) => {
+            if (status === 'pass' || status === 'present') return '<span class="auth-badge-pill auth-pass">✅ PASS</span>';
+            if (status === 'fail' || status === 'invalid') return '<span class="auth-badge-pill auth-fail">❌ FAIL</span>';
+            if (status === 'softfail' || status === 'warn') return '<span class="auth-badge-pill auth-softfail">⚠️ SOFTFAIL</span>';
+            if (status === 'aligned') return '<span class="auth-badge-pill auth-pass">✅ ALIGNED</span>';
+            if (status === 'mismatch') return '<span class="auth-badge-pill auth-fail">❌ MISMATCH</span>';
+            return '<span class="auth-badge-pill auth-none">⚪ NONE</span>';
+        };
+
+        let html = '';
+
+        // 1. Verdict Banner
+        html += '<div class="verdict-banner ' + escapeHtml(data.verdictClass) + '">'
+              + '<span class="verdict-icon">' + (data.verdictClass === 'verdict-clean' ? '✅' : data.verdictClass === 'verdict-suspicious' ? '⚠️' : '🚨') + '</span>'
+              + '<div>'
+              + '<h3 class="verdict-title">' + escapeHtml(data.verdict) + '</h3>'
+              + '<p class="verdict-meta">Header Risk Score: <strong>' + data.riskScore + '/100</strong> &bull; Engine: ' + escapeHtml(data.engine) + '</p>'
+              + '</div>'
+              + '</div>';
+
+        // 2. Authentication Matrix (SPF / DKIM / DMARC / Domain Alignment)
+        html += '<div class="auth-matrix-grid">'
+              + '<div class="auth-card">'
+              + '<span class="auth-card-title">SPF Check</span>'
+              + getAuthBadge(auth.spf)
+              + '<span class="auth-card-desc">' + escapeHtml(auth.spfDetails) + '</span>'
+              + '</div>'
+              + '<div class="auth-card">'
+              + '<span class="auth-card-title">DKIM Signature</span>'
+              + getAuthBadge(auth.dkim)
+              + '<span class="auth-card-desc">' + escapeHtml(auth.dkimDetails) + '</span>'
+              + '</div>'
+              + '<div class="auth-card">'
+              + '<span class="auth-card-title">DMARC Policy</span>'
+              + getAuthBadge(auth.dmarc)
+              + '<span class="auth-card-desc">' + escapeHtml(auth.dmarcDetails) + '</span>'
+              + '</div>'
+              + '<div class="auth-card">'
+              + '<span class="auth-card-title">Domain Alignment</span>'
+              + getAuthBadge(auth.alignment)
+              + '<span class="auth-card-desc">' + escapeHtml(auth.alignmentDetails) + '</span>'
+              + '</div>'
+              + '</div>';
+
+        // 3. Key Metadata Card
+        const returnMismatch = auth.alignment === 'mismatch';
+        const replyMismatch = auth.replyParsed.email && auth.fromParsed.email && auth.replyParsed.domain !== auth.fromParsed.domain;
+
+        html += '<div class="header-meta-grid">'
+              + '<div class="header-meta-row"><span class="header-meta-label">From:</span><span class="header-meta-val">' + escapeHtml(parsed.from || 'Not specified') + '</span></div>'
+              + (parsed.returnPath ? '<div class="header-meta-row"><span class="header-meta-label">Return-Path:</span><span class="header-meta-val ' + (returnMismatch ? 'val-mismatch' : 'val-aligned') + '">' + escapeHtml(parsed.returnPath) + (returnMismatch ? ' ⚠️ (MISMATCH)' : '') + '</span></div>' : '')
+              + (parsed.replyTo ? '<div class="header-meta-row"><span class="header-meta-label">Reply-To:</span><span class="header-meta-val ' + (replyMismatch ? 'val-mismatch' : '') + '">' + escapeHtml(parsed.replyTo) + (replyMismatch ? ' 🚨 (HIJACKED/EXTERNAL)' : '') + '</span></div>' : '')
+              + '<div class="header-meta-row"><span class="header-meta-label">To:</span><span class="header-meta-val">' + escapeHtml(parsed.to || 'Not specified') + '</span></div>'
+              + '<div class="header-meta-row"><span class="header-meta-label">Subject:</span><span class="header-meta-val">' + escapeHtml(parsed.subject || '(No Subject)') + '</span></div>'
+              + (parsed.date ? '<div class="header-meta-row"><span class="header-meta-label">Date:</span><span class="header-meta-val">' + escapeHtml(parsed.date) + '</span></div>' : '')
+              + (parsed.messageId ? '<div class="header-meta-row"><span class="header-meta-label">Message-ID:</span><span class="header-meta-val">' + escapeHtml(parsed.messageId) + '</span></div>' : '')
+              + '</div>';
+
+        // 4. Forensic Findings / Spoofing Indicators
+        if (data.findings && data.findings.length) {
+            html += '<div class="spoof-indicators-card">'
+                  + '<h4 class="card-label">🔍 Forensic Header Findings (' + data.findings.length + ')</h4>'
+                  + '<ul class="spoof-list">';
+            data.findings.forEach(f => {
+                const itemClass = f.severity === 'danger' ? 'spoof-item-danger' : f.severity === 'warn' ? 'spoof-item-warn' : 'spoof-item-safe';
+                html += '<li class="spoof-item ' + itemClass + '">'
+                      + '<span class="spoof-icon">' + (f.icon || '⚡') + '</span>'
+                      + '<div><strong>' + escapeHtml(f.title) + ':</strong> ' + escapeHtml(f.detail) + '</div>'
+                      + '</li>';
+            });
+            html += '</ul></div>';
+        }
+
+        renderHeaderHopsAndExport(html, data);
+    }
+
+    function renderHeaderHopsAndExport(baseHtml, data) {
+        let html = baseHtml;
+        const hops = data.hops;
+        const parsed = data.parsed;
+        const auth = data.auth;
+
+        // 5. Relay Hop Route Timeline
+        if (hops && hops.length) {
+            html += '<div class="hop-chain-container">'
+                  + '<h4 class="card-label">🌐 Mail Relay Route Timeline (' + hops.length + ' Hop' + (hops.length > 1 ? 's' : '') + ')</h4>'
+                  + '<div class="hop-timeline">';
+            hops.forEach((hop, i) => {
+                const isOrigin = i === 0;
+                const isDest = i === hops.length - 1;
+                const nodeClass = isOrigin ? 'hop-origin' : isDest ? 'hop-dest' : '';
+                const tagLabel = isOrigin ? 'Originating Server (Hop 1)' : isDest ? ('Final Gateway (Hop ' + hop.step + ')') : ('Relay MTA (Hop ' + hop.step + ')');
+
+                html += '<div class="hop-node ' + nodeClass + '">'
+                      + '<div class="hop-node-header">'
+                      + '<span class="hop-step-tag">' + tagLabel + '</span>'
+                      + (hop.ip ? '<span class="hop-ip-tag">' + escapeHtml(hop.ip) + '</span>' : '')
+                      + '</div>'
+                      + '<div class="hop-node-body"><strong>From:</strong> ' + escapeHtml(hop.fromHost) + ' &rarr; <strong>By:</strong> ' + escapeHtml(hop.byHost) + ' (' + escapeHtml(hop.protocol) + ')</div>'
+                      + (hop.timeStr ? '<div class="hop-time">🕒 ' + escapeHtml(hop.timeStr) + '</div>' : '')
+                      + '</div>';
+            });
+            html += '</div></div>';
+        }
+
+        // 6. Action Bar / Export
+        html += '<div class="export-actions-row">'
+              + '<button type="button" class="btn-export" id="btnCopyHeaderReport">📋 Copy Forensic Report</button>'
+              + '</div>';
+
+        dom.headerResultArea.innerHTML = html;
+
+        // Wire copy button
+        const copyBtn = $('#btnCopyHeaderReport');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                let md = '# Phish-Guard Email Header Forensic Report\n\n';
+                md += '- **Verdict:** ' + data.verdict + '\n';
+                md += '- **Risk Score:** ' + data.riskScore + '/100\n';
+                md += '- **Engine:** ' + data.engine + '\n';
+                md += '- **From:** ' + parsed.from + '\n';
+                md += '- **Return-Path:** ' + parsed.returnPath + '\n';
+                md += '- **Reply-To:** ' + (parsed.replyTo || 'None') + '\n';
+                md += '- **Subject:** ' + parsed.subject + '\n\n';
+                md += '## Authentication Checks\n';
+                md += '- **SPF:** ' + auth.spf.toUpperCase() + ' - ' + auth.spfDetails + '\n';
+                md += '- **DKIM:** ' + auth.dkim.toUpperCase() + ' - ' + auth.dkimDetails + '\n';
+                md += '- **DMARC:** ' + auth.dmarc.toUpperCase() + ' - ' + auth.dmarcDetails + '\n';
+                md += '- **Alignment:** ' + auth.alignment.toUpperCase() + ' - ' + auth.alignmentDetails + '\n\n';
+                if (data.findings && data.findings.length) {
+                    md += '## Forensic Findings\n';
+                    data.findings.forEach(f => {
+                        md += '- ' + (f.icon || '⚡') + ' **' + f.title + ':** ' + f.detail + '\n';
+                    });
+                }
+                navigator.clipboard.writeText(md).then(() => {
+                    const oldText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copied!';
+                    setTimeout(() => { copyBtn.innerHTML = oldText; }, 2000);
+                });
+            });
         }
     }
 

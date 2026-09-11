@@ -693,6 +693,260 @@ textarea::placeholder { color:#484f58; }
     box-shadow: none;
 }
 
+/* -- Email Header & Authentication Inspector -- */
+.header-intro-card {
+    background: linear-gradient(135deg, rgba(88,166,255,0.06), rgba(0,255,156,0.04));
+    border-color: rgba(88,166,255,0.25);
+    margin-bottom: 16px;
+}
+.header-tab-title-wrap h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+}
+.header-tab-title-wrap p {
+    font-size: 0.88rem;
+    color: #8b949e;
+    line-height: 1.5;
+}
+
+.auth-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+    .auth-matrix-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 440px) {
+    .auth-matrix-grid { grid-template-columns: 1fr; }
+}
+
+.auth-card {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.auth-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b949e;
+}
+.auth-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    width: fit-content;
+}
+.auth-pass {
+    background: rgba(0,255,156,0.15);
+    color: #00ff9c;
+    border: 1px solid rgba(0,255,156,0.35);
+}
+.auth-fail {
+    background: rgba(255,68,68,0.18);
+    color: #ff6b6b;
+    border: 1px solid rgba(255,68,68,0.4);
+}
+.auth-softfail, .auth-warn {
+    background: rgba(255,170,0,0.18);
+    color: #ffaa00;
+    border: 1px solid rgba(255,170,0,0.4);
+}
+.auth-none {
+    background: rgba(139,148,158,0.15);
+    color: #8b949e;
+    border: 1px solid rgba(139,148,158,0.3);
+}
+.auth-card-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.35;
+}
+
+.header-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+.header-meta-row {
+    display: flex;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    word-break: break-all;
+}
+@media (max-width: 600px) {
+    .header-meta-row { flex-direction: column; }
+    .header-meta-label { width: 100% !important; margin-bottom: 2px; }
+}
+.header-meta-label {
+    width: 120px;
+    min-width: 120px;
+    color: #8b949e;
+    font-weight: 600;
+}
+.header-meta-val {
+    color: #c9d1d9;
+    font-family: 'Consolas', monospace;
+    font-size: 0.84rem;
+}
+.header-meta-val.val-mismatch {
+    color: #ff6b6b;
+    background: rgba(255,68,68,0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,68,68,0.25);
+}
+.header-meta-val.val-aligned {
+    color: #00ff9c;
+}
+
+/* -- Hop Chain Route Visualizer -- */
+.hop-chain-container {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.hop-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    padding-left: 24px;
+    margin-top: 12px;
+}
+.hop-timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: #1e293b;
+}
+.hop-node {
+    position: relative;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 10px 14px;
+}
+.hop-node::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 14px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #58a6ff;
+    border: 2px solid #090d14;
+}
+.hop-node.hop-origin::before {
+    background: #ff6b6b;
+    box-shadow: 0 0 8px rgba(255,107,107,0.6);
+}
+.hop-node.hop-dest::before {
+    background: #00ff9c;
+    box-shadow: 0 0 8px rgba(0,255,156,0.6);
+}
+.hop-node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hop-step-tag {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #58a6ff;
+}
+.hop-node.hop-origin .hop-step-tag { color: #ff6b6b; }
+.hop-node.hop-dest .hop-step-tag { color: #00ff9c; }
+.hop-ip-tag {
+    font-family: 'Consolas', monospace;
+    font-size: 0.78rem;
+    background: #161b22;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #79c0ff;
+    border: 1px solid #30363d;
+}
+.hop-node-body {
+    font-size: 0.8rem;
+    color: #8b949e;
+    line-height: 1.4;
+    word-break: break-all;
+}
+.hop-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* -- Indicators List for Headers -- */
+.spoof-indicators-card {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.spoof-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.spoof-item {
+    font-size: 0.86rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.45;
+}
+.spoof-item-danger {
+    background: rgba(255,68,68,0.1);
+    border: 1px solid rgba(255,68,68,0.25);
+    color: #ff9999;
+}
+.spoof-item-warn {
+    background: rgba(255,170,0,0.1);
+    border: 1px solid rgba(255,170,0,0.25);
+    color: #ffcc66;
+}
+.spoof-item-safe {
+    background: rgba(0,255,156,0.08);
+    border: 1px solid rgba(0,255,156,0.2);
+    color: #7ee787;
+}
+
 /* -- Error -- */
 .error-box {
     background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3);

@@ -21,6 +21,9 @@
             <button type="button" class="tab-btn active" data-tab="analyzerTab" id="tabAnalyzerBtn">
                 <span class="tab-icon">🔍</span> Threat &amp; Psych Analyzer
             </button>
+            <button type="button" class="tab-btn" data-tab="headerTab" id="tabHeaderBtn">
+                <span class="tab-icon">📨</span> Email Header Analyzer
+            </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
@@ -105,7 +108,54 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- TAB 2: SECURITY AWARENESS LAB (SIMULATOR)                 -->
+        <!-- TAB 2: EMAIL HEADER & AUTHENTICATION ANALYZER             -->
+        <!-- ========================================================= -->
+        <div id="headerTab" class="tab-content">
+            <section class="card header-intro-card">
+                <div class="header-tab-title-wrap">
+                    <h2>📨 Email Header &amp; Authentication Inspector</h2>
+                    <p>Inspect raw MIME/RFC 5322 headers to uncover sender spoofing, SPF/DKIM/DMARC failures, relay hops, and fraudulent return paths.</p>
+                </div>
+            </section>
+
+            <!-- ===== HEADER PRESETS ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Header Test Cases:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-header-sample" data-sample="spoofedPaypal">🚨 Spoofed PayPal (DMARC Fail)</button>
+                    <button type="button" class="btn-sample btn-header-sample" data-sample="ceoReplyTo">🚨 CEO Wire (Reply-To Hijack)</button>
+                    <button type="button" class="btn-sample btn-header-sample" data-sample="m365Softfail">🚨 Spoofed M365 (SPF Softfail)</button>
+                    <button type="button" class="btn-sample btn-header-sample" data-sample="cleanGoogle">✅ Clean Google Workspace</button>
+                </div>
+            </div>
+
+            <!-- ===== HEADER INPUT CARD ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label for="headerInput" class="card-label">Raw Email Headers (RFC 5322)</label>
+                    <button type="button" id="clearHeaderBtn" class="btn-link">Clear</button>
+                </div>
+                <textarea id="headerInput" rows="11" spellcheck="false"
+                    placeholder="Paste raw email headers here (including Received, Authentication-Results, From, Return-Path, DKIM-Signature)..."></textarea>
+            </section>
+
+            <!-- ===== HEADER ANALYZE BUTTON ===== -->
+            <button id="analyzeHeaderBtn" class="btn-scan">
+                <span class="btn-icon">🔬</span> Inspect Email Headers &amp; Spoofing Risk
+            </button>
+
+            <!-- ===== HEADER LOADING ===== -->
+            <div id="headerLoading" class="loading hidden">
+                <div class="spinner"></div>
+                <span id="headerStatusText">Parsing authentication headers &amp; relay routes…</span>
+            </div>
+
+            <!-- ===== HEADER RESULTS AREA ===== -->
+            <div id="headerResultArea" class="result-area"></div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: SECURITY AWARENESS LAB (SIMULATOR)                 -->
         <!-- ========================================================= -->
         <div id="simulatorTab" class="tab-content">
             <section class="card sim-intro-card">
