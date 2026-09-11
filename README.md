@@ -2,7 +2,7 @@
 
 **AI-Powered Social Engineering Analyzer**
 
-A client-side web application that uses AI to detect phishing and social-engineering attempts in emails, SMS, and other text-based communications. Built as a B.Tech 4th-year Cybersecurity & AI capstone project.
+A client-side web application that uses AI to detect phishing and social-engineering attempts in emails, SMS, and other text-based communications. Built as a  Cybersecurity & AI capstone project.
 
 ## Live Demo
 
@@ -84,7 +84,7 @@ The workflow serves the `phish-guard-app/` folder. Every future push to `main` d
 
 ## License
 
-Built for academic purposes — B.Tech 4th-Year Cybersecurity & AI Capstone Project.
+Built for academic purposes — Cybersecurity & AI Capstone Project.
 
 ---
 
