@@ -1473,6 +1473,181 @@ textarea::placeholder { color:#484f58; }
     max-height: 280px;
 }
 
+/* ================================================================
+   TAB 6: SOC IR PLAYBOOKS & REMEDIATION STYLING
+   ================================================================ */
+.playbook-intro-card {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.07), rgba(99, 102, 241, 0.07));
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+.playbook-tab-title-wrap h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.playbook-tab-title-wrap p {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0;
+}
+.playbook-params-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 10px;
+}
+.playbook-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.playbook-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+}
+.playbook-input {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    color: #f1f5f9;
+    font-family: 'Consolas', monospace;
+    font-size: 0.84rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.playbook-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.playbook-progress-card {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.playbook-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.86rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+.playbook-progress-bar {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.playbook-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #00ff9c);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.playbook-phase-card {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+.playbook-phase-title {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.playbook-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.playbook-check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #161b22;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #21262d;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.playbook-check-item:hover {
+    border-color: #38bdf8;
+}
+.playbook-check-item.completed {
+    border-color: #00ff9c;
+    background: rgba(0, 255, 156, 0.04);
+}
+.playbook-check-item.completed .playbook-check-text {
+    text-decoration: line-through;
+    color: #64748b;
+}
+.playbook-check-input {
+    margin-top: 3px;
+    accent-color: #00ff9c;
+    cursor: pointer;
+}
+.playbook-check-text {
+    font-size: 0.86rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+.playbook-check-hint {
+    font-size: 0.76rem;
+    color: #8b949e;
+    margin-top: 3px;
+}
+
+.playbook-script-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.btn-script-tab {
+    background: #161b22;
+    border: 1px solid #21262d;
+    color: #8b949e;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-script-tab.active {
+    background: #38bdf8;
+    color: #090d14;
+    border-color: #38bdf8;
+}
+
+@media (max-width: 640px) {
+    .playbook-params-grid { grid-template-columns: 1fr; }
+}
+
 
 /* -- Error -- */
 .error-box {

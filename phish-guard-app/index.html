@@ -35,6 +35,9 @@
             <button type="button" class="tab-btn" data-tab="payloadTab" id="tabPayloadBtn">
                 <span class="tab-icon">📦</span> Payload &amp; Smuggling
             </button>
+            <button type="button" class="tab-btn" data-tab="playbookTab" id="tabPlaybookBtn">
+                <span class="tab-icon">🛡️</span> SOC IR Playbooks
+            </button>
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
@@ -354,6 +357,60 @@
             </div>
 
             <!-- ===== PAYLOAD RESULTS AREA ===== -->
+        <!-- ========================================================= -->
+        <!-- TAB 6: SOC INCIDENT RESPONSE PLAYBOOKS & REMEDIATION      -->
+        <!-- ========================================================= -->
+        <div id="playbookTab" class="tab-content">
+            <section class="card playbook-intro-card">
+                <div class="playbook-tab-title-wrap">
+                    <h2>🛡️ SOC Incident Response &amp; Remediation Playbooks</h2>
+                    <p>NIST SP 800-61 / SANS aligned incident response playbooks for phishing triage. Dynamically generate Exchange / Azure AD PowerShell scripts, Sentinel KQL hunts, GAM CLI commands, and executive incident notification briefs.</p>
+                </div>
+            </section>
+
+            <!-- ===== PLAYBOOK SCENARIO SELECTOR ===== -->
+            <div class="samples-card">
+                <span class="samples-title">⚡ Select Incident Response Playbook:</span>
+                <div class="sample-buttons">
+                    <button type="button" class="btn-sample btn-playbook-select active" data-scenario="bec">🔴 BEC &amp; Wire Fraud</button>
+                    <button type="button" class="btn-sample btn-playbook-select" data-scenario="aitm">🟠 Credential &amp; AitM MFA Theft</button>
+                    <button type="button" class="btn-sample btn-playbook-select" data-scenario="smuggling">🟡 HTML Smuggling &amp; Dropper</button>
+                    <button type="button" class="btn-sample btn-playbook-select" data-scenario="oauth">🟣 OAuth Illicit Consent Grant</button>
+                    <button type="button" class="btn-sample btn-playbook-select" data-scenario="whaling">🔵 Executive Whaling Impersonation</button>
+                    <button type="button" class="btn-sample btn-playbook-select" data-scenario="quishing">🟢 Quishing / Mobile QR Lure</button>
+                </div>
+            </div>
+
+            <!-- ===== INCIDENT PARAMETERS FORM ===== -->
+            <section class="card">
+                <div class="card-header-flex">
+                    <label class="card-label">🎯 Incident Parameters (Auto-populates Remediation Scripts)</label>
+                    <button type="button" id="resetPlaybookParamsBtn" class="btn-link">Reset Defaults</button>
+                </div>
+                <div class="playbook-params-grid">
+                    <div class="playbook-field">
+                        <label for="pbVictimUser">Target / Compromised User(s):</label>
+                        <input type="text" id="pbVictimUser" class="playbook-input" value="alex.taylor@company.com" placeholder="user@domain.com">
+                    </div>
+                    <div class="playbook-field">
+                        <label for="pbAttackerSender">Attacker / Spoofed Sender:</label>
+                        <input type="text" id="pbAttackerSender" class="playbook-input" value="ceo-direct@executive-payroll-corp.top" placeholder="attacker@bad-domain.com">
+                    </div>
+                    <div class="playbook-field">
+                        <label for="pbMaliciousDomain">Malicious Domain / IP / URL:</label>
+                        <input type="text" id="pbMaliciousDomain" class="playbook-input" value="https://login-auth-portal.cfd/auth" placeholder="bad-domain.top or IP">
+                    </div>
+                    <div class="playbook-field">
+                        <label for="pbPhishSubject">Phishing Email Subject:</label>
+                        <input type="text" id="pbPhishSubject" class="playbook-input" value="URGENT: Executive Wire Transfer Authorization #9921" placeholder="Email subject line">
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== PLAYBOOK CONTENT & CHECKLIST AREA ===== -->
+            <div id="playbookContainer"></div>
+        </div>
+
             <div id="payloadResultArea" class="result-area"></div>
         </div>
 
@@ -435,6 +492,7 @@
         </footer>
     </div>
 
+    <script src="playbooks.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

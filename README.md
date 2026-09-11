@@ -48,6 +48,16 @@ A modern client-side cybersecurity web application designed to detect phishing, 
   - Deceptive double file extension detection (`.pdf.exe`, `.xlsx.vbs`, `.docx.iso`, `.jpg.hta`, `.zip.scr`).
   - Malicious SVG script injection and XSS redirection hooks.
   - Multi-engine AI and Local SOC incident triage summaries with Microsoft Sentinel/Defender KQL threat hunting queries and one-click SOC Markdown Dossier export.
+- **🛡️ SOC Incident Response & Remediation Playbooks (NIST SP 800-61 / SANS Aligned):**
+  - Interactive containment checklists across 6 critical threat vectors: **Business Email Compromise (BEC)**, **Adversary-in-the-Middle (AitM) MFA Bypass**, **HTML Smuggling & Malware Drops**, **OAuth SaaS Illicit Consent Grants**, **Executive Whaling**, and **Quishing**.
+  - Dynamic parameter binding: auto-populates victim users, spoofed senders, bad domains, and phishing subjects into all scripts and communications.
+  - **Live Auto-Generated Triage & Remediation CLI Scripts**:
+    - **Microsoft 365 / Azure AD PowerShell**: Invalidate session refresh tokens (`Revoke-AzureADUserAllRefreshToken`), audit & delete malicious inbox forwarding rules (`Get-InboxRule`, `Remove-InboxRule`), purge phishing emails across all mailboxes (`New-ComplianceSearchAction -Purge`), and tenant URL blocking.
+    - **Google Workspace GAM CLI**: Force account signout, delete external forwarding addresses, and organization-wide email purge.
+    - **Microsoft Sentinel & Defender KQL Hunts**: Query `OfficeActivity` for unauthorized rule creation, `SigninLogs` for impossible travel token theft, and `DeviceProcessEvents` for browser child droppers.
+    - **Splunk SPL Queries**: Search activity logs for mailbox manipulation and attacker indicators.
+  - **Ready-to-Send Incident Broadcast Email Drafter**: One-click internal broadcast notices for company employees and executive leadership.
+
 
 - **🧠 Psychological & Cognitive Tactic Breakdown:** Maps deceptive linguistic cues to social engineering manipulation categories (e.g. *False Urgency*, *Authority Impersonation*, *Fear & Intimidation*, *Curiosity Bait*, *Credential Harvesting*) complete with exact quoted triggers and severity ratings.
 - **🗣️ Plain-English Summary:** Zero-jargon translation explaining the core threat, exact cues found, and practical real-world impact for non-technical users.
