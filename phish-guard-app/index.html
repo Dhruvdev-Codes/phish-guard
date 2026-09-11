@@ -55,6 +55,9 @@
             <button type="button" class="tab-btn" data-tab="simulatorTab" id="tabSimulatorBtn">
                 <span class="tab-icon">🎯</span> Security Awareness Lab
             </button>
+            <button type="button" class="tab-btn" data-tab="copilotTab" id="tabCopilotBtn">
+                <span class="tab-icon">🤖</span> AI Cyber Copilot
+            </button>
         </nav>
 
         <!-- ========================================================= -->
@@ -611,6 +614,94 @@
                 </div>
             </section>
         </div>
+        <!-- ========================================================= -->
+        <!-- TAB 9: AI CYBER COPILOT & THREAT ADVISOR                   -->
+        <!-- ========================================================= -->
+        <div id="copilotTab" class="tab-content">
+            <!-- ===== COPILOT HEADER & ENGINE STATUS ===== -->
+            <section class="card copilot-intro-card">
+                <div class="copilot-header-flex">
+                    <div class="copilot-title-wrap">
+                        <div class="card-icon">🤖</div>
+                        <div>
+                            <h2>Phish-Guard AI Cyber Copilot &amp; Q&amp;A</h2>
+                            <p>Ask cybersecurity questions, investigate active session forensics, and get instant threat triage guidance.</p>
+                        </div>
+                    </div>
+                    <div class="copilot-engine-indicator">
+                        <span class="pulse-dot"></span>
+                        <span id="copilotEngineBadge">Engine: Auto-Detect (Gemini / OpenAI / Offline SOC)</span>
+                    </div>
+                </div>
+
+                <!-- Active Session Context Attached Bar -->
+                <div class="copilot-context-bar">
+                    <span class="copilot-context-label">Attach Session Context:</span>
+                    <button type="button" class="copilot-ctx-chip active" id="btnCtxScan" title="Include latest email / threat analysis findings">
+                        <span class="chip-icon">🔍</span> Threat Scan Findings
+                    </button>
+                    <button type="button" class="copilot-ctx-chip active" id="btnCtxHeader" title="Include parsed SPF, DKIM, DMARC forensic data">
+                        <span class="chip-icon">📨</span> Email Headers &amp; Auth
+                    </button>
+                    <button type="button" class="copilot-ctx-chip active" id="btnCtxIoc" title="Include extracted threat indicators &amp; rules">
+                        <span class="chip-icon">🔬</span> Extracted IOCs
+                    </button>
+                    <button type="button" class="copilot-ctx-chip active" id="btnCtxPlaybook" title="Include active incident response playbook parameters">
+                        <span class="chip-icon">🛡️</span> SOC IR Playbook
+                    </button>
+                </div>
+
+                <!-- Quick Cyber Inquiries & Suggested Prompts -->
+                <div class="copilot-quick-prompts">
+                    <span class="quick-prompts-label">Quick Inquiries:</span>
+                    <button type="button" class="btn-copilot-prompt" data-prompt="Explain how SPF, DKIM, and DMARC prevent spoofing, and what happens when alignment fails.">
+                        📨 Explain SPF/DKIM/DMARC
+                    </button>
+                    <button type="button" class="btn-copilot-prompt" data-prompt="How does HTML Smuggling work to bypass secure email gateways, and how do we detect it?">
+                        📦 How HTML Smuggling Works
+                    </button>
+                    <button type="button" class="btn-copilot-prompt" data-prompt="What are the immediate containment and remediation steps for an AitM session token hijacking attack?">
+                        🚨 Contain AitM / BEC Incident
+                    </button>
+                    <button type="button" class="btn-copilot-prompt" data-prompt="How do IDN homograph and Punycode attacks trick victims, and how can defenders block them?">
+                        🌐 IDN Homograph &amp; Punycode
+                    </button>
+                    <button type="button" class="btn-copilot-prompt" data-prompt="Deconstruct the psychological urgency triggers and cognitive biases exploited in executive phishing lures.">
+                        🧠 Social Engineering Psychology
+                    </button>
+                </div>
+            </section>
+
+            <!-- ===== COPILOT CHAT FEED & WORKBENCH ===== -->
+            <section class="card copilot-chat-card">
+                <div class="copilot-feed-header">
+                    <div class="copilot-feed-status">
+                        <span class="status-indicator-live"></span> Live SOC AI Intelligence
+                    </div>
+                    <div class="copilot-feed-actions">
+                        <button type="button" id="btnCopilotClear" class="btn-copilot-action" title="Clear Chat History">🗑️ Clear Chat</button>
+                        <button type="button" id="btnCopilotExport" class="btn-copilot-action" title="Export Markdown Transcript">📥 Export Transcript (.md)</button>
+                    </div>
+                </div>
+
+                <!-- Chat Feed -->
+                <div id="copilotChatFeed" class="copilot-chat-feed"></div>
+
+                <!-- Chat Input Controls -->
+                <div class="copilot-input-container">
+                    <div class="copilot-input-wrapper">
+                        <textarea id="copilotInput" class="copilot-textarea" rows="2" placeholder="Ask any cybersecurity question or threat triage guidance… (Shift+Enter for newline, Enter to send)"></textarea>
+                        <button type="button" id="btnCopilotSend" class="btn-copilot-send" title="Send Question">
+                            <span class="send-icon">🚀</span> Send
+                        </button>
+                    </div>
+                    <div class="copilot-input-footer">
+                        <small>⚡ Supports Google Gemini, OpenAI GPT-4o-mini, or zero-key Built-in SOC Knowledge Base. No keys required.</small>
+                    </div>
+                </div>
+            </section>
+        </div>
+
         <footer class="footer">
             <p><strong>Phish-Guard</strong> — Cybersecurity &amp; AI Platform</p>
             <p>
@@ -629,6 +720,7 @@
     <script src="cyber-bg.js"></script>
     <script src="ioc-studio.js"></script>
     <script src="playbooks.js"></script>
+    <script src="copilot.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

@@ -78,6 +78,12 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 - **🎯 Interactive Security Awareness Lab (Simulator):**
   - Hands-on phishing identification training with instant feedback, psychological breakdown, and red/green flags.
   - ✨ **AI Scenario Generator:** Generates fresh, modern enterprise scenarios (quishing, vishing follow-ups, invoice fraud, SaaS consent phishing) using Gemini or OpenAI.
+- **🤖 AI Cyber Copilot & SOC Q&A Workbench:**
+  - Interactive cyber advisor capable of explaining complex attack vectors (SPF/DKIM/DMARC alignment, HTML smuggling, AitM session hijacking, IDN homographs, social engineering psychology).
+  - Full session context aggregator bridging active scan findings, email headers, extracted IOCs, and IR playbook parameters directly into AI reasoning.
+  - Multi-provider support: Google Gemini 1.5 Flash, OpenAI GPT-4o-mini, or zero-key Built-in Offline SOC Knowledge Base.
+  - One-click inline deep-dive buttons (`🤖 Ask AI Copilot to Explain`) directly from live scan and header verdict cards.
+  - Markdown formatting with syntax-highlighted code blocks, copy actions, and full transcript export.
 - **⚡ Quick Test Presets:** One-click presets for Bank Alert Scams, CEO Gift Card BEC, Package Smishing, IT Password Expiry, Payroll Bonus lures, and Clean Meeting Invites.
 - **🛡️ MITRE ATT&CK Tagging:** Automated mapping to techniques (`T1566: Phishing`, `T1566.002: Spearphishing Link`, `T1598: Phishing for Information`).
 - **🔍 VirusTotal Threat Intelligence:** Live reputation checks for extracted URLs and malicious domains.

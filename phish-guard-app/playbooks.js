@@ -530,6 +530,15 @@
         initPlaybooks();
     }
 
+    window.PhishGuardPlaybooks = {
+        getCurrentState: () => ({
+            scenario: currentScenario,
+            title: PLAYBOOK_DATA[currentScenario]?.title,
+            checklistState: checklistState[currentScenario],
+            params: getParams()
+        })
+    };
+
 })();
 
 

@@ -541,4 +541,8 @@ index=endpoint sourcetype=sysmon EventCode=1
         renderRule([], _activeRule);
     });
 
+    window.PhishGuardIOCStudio = {
+        getExtractedIOCs: () => _allIOCs
+    };
+
 })();

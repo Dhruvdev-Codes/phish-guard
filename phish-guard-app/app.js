@@ -640,6 +640,11 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
         });
     }
 
+    function switchToTab(tabId) {
+        const btn = $(`[data-tab="${tabId}"]`);
+        if (btn) btn.click();
+    }
+
     function onProviderChange() {
         aiProvider = dom.aiProviderSelect.value;
         const meta = PROVIDER_META[aiProvider] || PROVIDER_META.gemini;
@@ -1322,19 +1327,21 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
             html += '</div>';
         }
 
-        // ---- Action Bar (Export & Copy Report) ----
+        // ---- Action Bar (Export, Copy Report & AI Copilot Deep Dive) ----
         html += ''
             + '<div class="result-actions">'
             +   '<button type="button" class="btn-action" id="copyReportBtn">📋 Copy Incident Report</button>'
             +   '<button type="button" class="btn-action" id="downloadJsonBtn">📥 Download JSON</button>'
+            +   '<button type="button" class="btn-action btn-ask-copilot-inline" id="askCopilotScanBtn">🤖 Ask AI Copilot to Explain</button>'
             + '</div>';
 
         html += '</div>';
         dom.resultArea.innerHTML = html;
 
-        // Wire up copy and download
+        // Wire up copy, download and copilot
         const copyBtn = document.getElementById('copyReportBtn');
         const jsonBtn = document.getElementById('downloadJsonBtn');
+        const copilotScanBtn = document.getElementById('askCopilotScanBtn');
 
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
@@ -1344,6 +1351,16 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
         if (jsonBtn) {
             jsonBtn.addEventListener('click', () => {
                 downloadJsonReport();
+            });
+        }
+        if (copilotScanBtn) {
+            copilotScanBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Explain why this message received a risk score of ${ai.riskScore}/100 (${ai.verdict}) and break down the primary threat indicators, cognitive manipulation tactics, and mitigation priorities.`,
+                        { scan: true, header: false, ioc: true, playbook: true }
+                    );
+                }
             });
         }
     }
@@ -2139,15 +2156,18 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
             html += '</div></div>';
         }
 
-        // 6. Action Bar / Export
+        // 6. Action Bar / Export & AI Copilot
         html += '<div class="export-actions-row">'
               + '<button type="button" class="btn-export" id="btnCopyHeaderReport">📋 Copy Forensic Report</button>'
+              + '<button type="button" class="btn-export btn-ask-copilot-inline" id="btnAskCopilotHeader">🤖 Ask AI Copilot to Analyze</button>'
               + '</div>';
 
         dom.headerResultArea.innerHTML = html;
 
-        // Wire copy button
+        // Wire copy and copilot buttons
         const copyBtn = $('#btnCopyHeaderReport');
+        const copilotHeaderBtn = $('#btnAskCopilotHeader');
+
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
                 let md = '# Phish-Guard Email Header Forensic Report\n\n';
@@ -2174,6 +2194,17 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
                     copyBtn.innerHTML = '✅ Copied!';
                     setTimeout(() => { copyBtn.innerHTML = oldText; }, 2000);
                 });
+            });
+        }
+
+        if (copilotHeaderBtn) {
+            copilotHeaderBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Perform an in-depth forensic breakdown of these email headers: explain SPF (${auth.spf}), DKIM (${auth.dkim}), DMARC (${auth.dmarc}), domain alignment, and any spoofing indicators detected.`,
+                        { scan: false, header: true, ioc: true, playbook: true }
+                    );
+                }
             });
         }
     }
@@ -3906,5 +3937,21 @@ Provide a concise, expert SOC triage briefing formatted with clear headings:
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+
+    // ================================================================
+    //  GLOBAL INTEGRATION APIS
+    // ================================================================
+    window.PhishGuard = {
+        switchToTab: switchToTab
+    };
+
+    window.PhishGuardContext = {
+        getLastScan: () => lastScanData,
+        getLastHeaderScan: () => lastHeaderScanData,
+        getAiProvider: () => aiProvider,
+        getApiKey: () => apiKey || dom.apiKeyInput?.value?.trim() || '',
+        getExtractedIOCs: () => window.PhishGuardIOCStudio?.getExtractedIOCs?.() || null,
+        getPlaybookState: () => window.PhishGuardPlaybooks?.getCurrentState?.() || null
+    };
 
 })();
