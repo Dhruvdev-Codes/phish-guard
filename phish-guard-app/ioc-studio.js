@@ -515,6 +515,24 @@ index=endpoint sourcetype=sysmon EventCode=1
             download(buildBlocklist(_allIOCs), 'phishguard-blocklist.txt', 'text/plain');
         });
 
+        // AI Copilot Threat Profiling from IOCs
+        const copilotIocBtn = document.getElementById('btnAskCopilotIOCs');
+        if (copilotIocBtn) {
+            copilotIocBtn.addEventListener('click', () => {
+                if (!_allIOCs.length) {
+                    alert('Please extract indicators or select a threat preset first.');
+                    return;
+                }
+                if (window.PhishGuardCopilot) {
+                    const sampleType = (_allIOCs.slice(0, 8).map(i => `${i.type.toUpperCase()}: ${i.value}`).join(', '));
+                    window.PhishGuardCopilot.askWithContext(
+                        `Synthesize a Cyber Threat Intelligence (CTI) Actor Campaign Dossier and MITRE ATT&CK Mapping based on these ${_allIOCs.length} extracted indicators:\n${sampleType}\n\nDetail the threat actor profile, delivery vectors, persistence methods, and enterprise detection recommendations.`,
+                        { scan: false, header: false, ioc: true, playbook: true }
+                    );
+                }
+            });
+        }
+
         // Rule tabs
         document.querySelectorAll('.btn-ioc-rule-tab').forEach(tab => {
             tab.addEventListener('click', () => {

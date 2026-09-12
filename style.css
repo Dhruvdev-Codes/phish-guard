@@ -3219,4 +3219,48 @@ textarea::placeholder { color: #484f58; }
     }
 }
 
+/* Interactive Psychological Bias Cards & Copilot Triggers */
+.psych-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.psych-card-header h4 {
+    margin: 0;
+}
+.psych-hint-badge {
+    font-size: 0.74rem;
+    color: var(--accent-cyan);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+.psych-clickable {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+.psych-clickable:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.15);
+}
+.psych-action-hint {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.psych-clickable:hover .psych-action-hint {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+
 

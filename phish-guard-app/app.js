@@ -702,29 +702,37 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
                 vtResults = await scanURLsWithVirusTotal(urls, vtKey);
             }
 
-            // 3 - Engine Selection: Gemini / OpenAI / Heuristic
+            // 3 - Engine Selection: Gemini / OpenAI / Heuristic (with Auto-Fallback)
             let analysis = null;
             let engineUsed = '';
 
-            if (aiProvider !== 'heuristic' && !apiKey) {
-                throw new Error('An API key is required for the ' +
-                    (aiProvider === 'gemini' ? 'Gemini' : 'OpenAI') +
-                    ' engine. Enter your key above, or switch to the Built-in Heuristic Engine.');
-            }
-
             if (aiProvider === 'gemini' && apiKey) {
-                setStatus('Running Google Gemini 1.5 Flash neural + psych analysis...');
-                analysis = await analyzeWithGemini(message, urls, apiKey);
-                engineUsed = 'AI (Gemini 1.5 Flash)';
+                try {
+                    setStatus('Running Google Gemini 1.5 Flash neural + psych analysis...');
+                    analysis = await analyzeWithGemini(message, urls, apiKey);
+                    engineUsed = 'AI (Gemini 1.5 Flash)';
+                } catch (apiErr) {
+                    console.warn('Gemini API call failed, falling back to heuristic engine:', apiErr);
+                    setStatus('Gemini API unreachable — using Built-in Cognitive Heuristic Engine...');
+                    analysis = analyzeHeuristics(message, urls);
+                    engineUsed = 'Built-in Cognitive Heuristic Engine (Auto-Fallback)';
+                }
             } else if (aiProvider === 'openai' && apiKey) {
-                setStatus('Running OpenAI GPT-4o-mini neural analysis...');
-                analysis = await analyzeWithOpenAI(message, urls, apiKey);
-                engineUsed = 'AI (GPT-4o-mini)';
+                try {
+                    setStatus('Running OpenAI GPT-4o-mini neural analysis...');
+                    analysis = await analyzeWithOpenAI(message, urls, apiKey);
+                    engineUsed = 'AI (GPT-4o-mini)';
+                } catch (apiErr) {
+                    console.warn('OpenAI API call failed, falling back to heuristic engine:', apiErr);
+                    setStatus('OpenAI API unreachable — using Built-in Cognitive Heuristic Engine...');
+                    analysis = analyzeHeuristics(message, urls);
+                    engineUsed = 'Built-in Cognitive Heuristic Engine (Auto-Fallback)';
+                }
             } else {
                 setStatus('Running built-in Heuristic + Cognitive Analysis Engine...');
                 await new Promise(r => setTimeout(r, 450));
                 analysis = analyzeHeuristics(message, urls);
-                engineUsed = 'Local Heuristic Engine';
+                engineUsed = apiKey ? 'Local Heuristic Engine' : 'Built-in Cognitive SOC Engine (Zero-Key)';
             }
 
             // Ensure results always include psych + plain-English layers
@@ -1252,19 +1260,24 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
         // ---- Psychological & Cognitive Manipulation Breakdown ----
         if (ai.psychTriggers && ai.psychTriggers.length) {
             html += '<div class="psych-card">'
-                +   '<h4>🧠 Social Engineering &amp; Psychological Tactic Breakdown</h4>'
+                +   '<div class="psych-card-header">'
+                +     '<h4>🧠 Social Engineering &amp; Psychological Tactic Breakdown</h4>'
+                +     '<span class="psych-hint-badge">💡 Click any tactic to ask AI Copilot</span>'
+                +   '</div>'
                 +   '<div class="psych-triggers-grid">';
             ai.psychTriggers.forEach(function (t) {
                 const sev = t.severity || 'med';
                 const sevLabel = { high: 'High', med: 'Medium', low: 'Low' }[sev] || 'Medium';
+                const tacticName = t.name || 'Psychological Tactic';
                 html += ''
-                    + '<div class="psych-trigger-item sev-' + sev + '">'
+                    + '<div class="psych-trigger-item sev-' + sev + ' psych-clickable" data-tactic="' + escapeHtml(tacticName) + '" title="Click to ask AI Copilot about ' + escapeHtml(tacticName) + '">'
                     +   '<div class="psych-header-row">'
-                    +     '<span class="psych-tactic-name">' + escapeHtml(t.icon ? t.icon + ' ' : '🧠 ') + escapeHtml(t.name || 'Psychological Tactic') + '</span>'
+                    +     '<span class="psych-tactic-name">' + escapeHtml(t.icon ? t.icon + ' ' : '🧠 ') + escapeHtml(tacticName) + '</span>'
                     +     '<span class="psych-sev-badge">' + sevLabel + '</span>'
                     +   '</div>'
                     +   (t.quote ? '<span class="psych-quote">"' + escapeHtml(t.quote) + '"</span>' : '')
                     +   '<p class="psych-explanation">' + escapeHtml(t.description || '') + '</p>'
+                    +   '<div class="psych-action-hint">🤖 Ask AI Copilot how attackers weaponize this →</div>'
                     + '</div>';
             });
             html += '</div></div>';
@@ -1333,6 +1346,8 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
             +   '<button type="button" class="btn-action" id="copyReportBtn">📋 Copy Incident Report</button>'
             +   '<button type="button" class="btn-action" id="downloadJsonBtn">📥 Download JSON</button>'
             +   '<button type="button" class="btn-action btn-ask-copilot-inline" id="askCopilotScanBtn">🤖 Ask AI Copilot to Explain</button>'
+            +   '<button type="button" class="btn-action btn-ask-copilot-inline" id="askCopilotKqlBtn">🛡️ Sentinel KQL Hunt</button>'
+            +   '<button type="button" class="btn-action btn-ask-copilot-inline" id="askCopilotBulletinBtn">📢 Draft Phish Alert</button>'
             + '</div>';
 
         html += '</div>';
@@ -1342,6 +1357,8 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
         const copyBtn = document.getElementById('copyReportBtn');
         const jsonBtn = document.getElementById('downloadJsonBtn');
         const copilotScanBtn = document.getElementById('askCopilotScanBtn');
+        const copilotKqlBtn = document.getElementById('askCopilotKqlBtn');
+        const copilotBulletinBtn = document.getElementById('askCopilotBulletinBtn');
 
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
@@ -1363,6 +1380,39 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
                 }
             });
         }
+        if (copilotKqlBtn) {
+            copilotKqlBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Generate Microsoft Sentinel / Defender KQL threat hunting queries and Splunk SPL queries to hunt for this phishing campaign across endpoints and email logs.`,
+                        { scan: true, header: true, ioc: true, playbook: false }
+                    );
+                }
+            });
+        }
+        if (copilotBulletinBtn) {
+            copilotBulletinBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Draft an urgent, professional, and clear Security Awareness Warning Bulletin for enterprise employees warning them about this specific phishing attack pattern.`,
+                        { scan: true, header: false, ioc: false, playbook: false }
+                    );
+                }
+            });
+        }
+
+        // Wire clickable psych triggers
+        document.querySelectorAll('.psych-clickable').forEach(item => {
+            item.addEventListener('click', () => {
+                const tactic = item.dataset.tactic;
+                if (window.PhishGuardCopilot && tactic) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Deconstruct the psychological urgency lever and cognitive bias of "${tactic}" detected in this message. How do attackers weaponize it, and how can employees train to spot it?`,
+                        { scan: true, header: false, ioc: false, playbook: false }
+                    );
+                }
+            });
+        });
     }
 
     // ================================================================
@@ -1442,7 +1492,20 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
               '<div class="feedback-headline">' + headline + '</div>'
             + '<div class="feedback-body"><strong>Correct answer: ' + verdictLabel + '</strong><br>'
             +   escapeHtml(s.explanation || '') + '</div>'
-            + breakdown;
+            + breakdown
+            + '<div style="margin-top:14px;"><button type="button" class="btn-action btn-ask-copilot-inline" id="btnAskCopilotSimFeedback">🤖 Ask AI Copilot: Deep Dive on this Lure &amp; Cognitive Biases</button></div>';
+
+        const copilotSimBtn = document.getElementById('btnAskCopilotSimFeedback');
+        if (copilotSimBtn) {
+            copilotSimBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Explain in depth why this scenario ("${s.subject}" from ${s.from}) is ${s.isPhish ? 'a dangerous phishing lure' : 'legitimate communication'}. Deconstruct the cognitive biases (${(s.cognitiveBiases || []).join(', ')}), indicators, and what employees should remember.`,
+                        { scan: false, header: false, ioc: false, playbook: false }
+                    );
+                }
+            });
+        }
 
         updateSimStats();
     }
@@ -1561,43 +1624,122 @@ Return strictly valid JSON with this exact schema (no markdown fences):
         return JSON.parse(content);
     }
 
-    async function generateAIScenario() {
-        if (!apiKey) {
-            dom.simFeedbackArea.className = 'sim-feedback-area incorrect';
-            dom.simFeedbackArea.innerHTML =
-                  '<div class="feedback-headline">🔑 API Key Required</div>'
-                + '<div class="feedback-body">Enter a <strong>Gemini</strong> or <strong>OpenAI</strong> API key in the Analyzer tab, then try again. Or use the built-in scenarios with the offline heuristic engine.</div>';
-            dom.simFeedbackArea.classList.remove('hidden');
-            return;
+    const DYNAMIC_OFFLINE_SCENARIOS = [
+        {
+            category: "Quishing / Mobile QR Authentication",
+            difficulty: "Advanced",
+            diffClass: "diff-hard",
+            from: "IT Identity Management <authenticator-setup@secure-identity-cloud.cfd>",
+            subject: "Mandatory: Re-enroll MFA Device via QR Code",
+            body: "Employee Identity Notice:\n\nOur corporate Okta / Duo multi-factor authentication server was upgraded over the weekend. All staff must scan the migration barcode with their mobile camera within 24 hours to sync security tokens:\n\n[Embedded High-Density QR Code Lure -> https://okta-migration-auth.cfd/qr-sync]\n\nFailure to scan will result in temporary suspension of Outlook and VPN privileges.\n\nCorporate IT Information Security Team",
+            isPhish: true,
+            title: "Quishing / Mobile QR Token Bypass",
+            explanation: "Adversaries use QR codes ('Quishing') to move victim interactions from protected corporate workstations to unmonitored mobile devices.",
+            cognitiveBiases: [
+                "Technological Intimidation (IT infrastructure upgrade)",
+                "Urgency & Compliance Pressure ('within 24 hours or suspension')",
+                "Cross-Device Pivot (evading desktop endpoint security)"
+            ],
+            indicators: [
+                "QR code directing to non-corporate domain (.cfd)",
+                "Bypassing enterprise desktop inspection tools",
+                "Threat of credential suspension"
+            ],
+            coaching: "Never scan QR codes in emails using personal or unmanaged mobile devices. Confirm IT upgrades through your company intranet."
+        },
+        {
+            category: "SaaS OAuth Consent Phishing",
+            difficulty: "Advanced",
+            diffClass: "diff-hard",
+            from: "Microsoft App Permissions <permissions@graph-cloud-sync.com>",
+            subject: "Action Required: Grant Permission for 'Enterprise AI Meeting Transcriber'",
+            body: "Microsoft 365 Cloud Permissions:\n\nAn application named 'AI Executive Meeting Notes Pro' is requesting the following OAuth permissions for your mailbox:\n- Read all mail items (Mail.Read)\n- Send mail on behalf of user (Mail.Send)\n- Access offline data (offline_access)\n\nClick Accept below to authorize seamless integration with your Teams calendar:\nhttps://login.microsoftonline.com.oauth-authorize-grant.cfd/consent\n\nMicrosoft Cloud Security",
+            isPhish: true,
+            title: "Illegitimate OAuth Consent Application Grant",
+            explanation: "Adversaries trick users into granting broad read/write API permissions to rogue Azure AD/Entra ID applications, allowing data theft even if passwords change.",
+            cognitiveBiases: [
+                "AI / Tool Hype (perceived productivity benefit)",
+                "Familiarity Bias (looks like standard Microsoft OAuth screen)",
+                "Passive Consent (clicking 'Accept' without reading permission scope)"
+            ],
+            indicators: [
+                "Excessive permissions requested (Mail.Read, Mail.Send, offline_access)",
+                "Unverified publisher and lookalike consent URL",
+                "Application not approved by enterprise IT catalog"
+            ],
+            coaching: "Never approve third-party OAuth app permissions. Always route tool requests through your enterprise IT change board."
+        },
+        {
+            category: "Vendor Invoice Wire Fraud",
+            difficulty: "Intermediate",
+            diffClass: "diff-med",
+            from: "Accounts Receivable <billing@acme-industrial-supplies-llc.com>",
+            subject: "Updated Remittance Details for Outstanding Invoice #INV-2026-8819",
+            body: "Hi Team,\n\nPlease find attached the revised invoice #INV-2026-8819 for last month's warehouse hardware delivery ($18,450.00).\n\nKindly note that our primary banking institution has recently changed due to an annual audit. Please update your ACH/wire records to our new Citibank account specified in the PDF.\n\nThank you for your prompt payment.\n\nWarm regards,\nElena Rostova\nSenior Billing Specialist",
+            isPhish: true,
+            title: "Vendor Invoice / Bank Account Modification",
+            explanation: "Attackers impersonate existing corporate suppliers claiming revised banking details to redirect legitimate payments to attacker accounts.",
+            cognitiveBiases: [
+                "Routine Processing Habit (assuming standard vendor invoice)",
+                "Plausible Context (citing an annual audit)",
+                "Polite Professionalism"
+            ],
+            indicators: [
+                "Unannounced change of bank routing numbers via email",
+                "Slight lookalike vendor domain name variation",
+                "Lack of dual-control out-of-band verification"
+            ],
+            coaching: "Always call the vendor at a verified telephone number on file before modifying bank account or wire transfer coordinates."
         }
+    ];
 
+    async function generateAIScenario() {
         if (!dom.btnGenerateChallenge) return;
         dom.btnGenerateChallenge.disabled = true;
         const originalLabel = dom.btnGenerateChallenge.innerHTML;
-        dom.btnGenerateChallenge.innerHTML = '⏳ Generating...';
+        dom.btnGenerateChallenge.innerHTML = '⏳ Generating Challenge...';
 
         try {
-            const provider = aiProvider === 'openai' ? 'openai' : 'gemini';
-            const raw = provider === 'openai'
-                ? await generateScenarioOpenAI(apiKey)
-                : await generateScenarioGemini(apiKey);
-            const scenario = normalizeGeneratedScenario(raw);
+            let scenario = null;
+            let sourceLabel = '';
+
+            if (apiKey) {
+                const provider = aiProvider === 'openai' ? 'openai' : 'gemini';
+                try {
+                    const raw = provider === 'openai'
+                        ? await generateScenarioOpenAI(apiKey)
+                        : await generateScenarioGemini(apiKey);
+                    scenario = normalizeGeneratedScenario(raw);
+                    sourceLabel = provider === 'openai' ? 'OpenAI GPT-4o-mini' : 'Google Gemini 1.5 Flash';
+                } catch (apiErr) {
+                    console.warn('Online AI scenario generation failed, using dynamic local engine:', apiErr);
+                }
+            }
+
+            if (!scenario) {
+                const unused = DYNAMIC_OFFLINE_SCENARIOS.filter(ds => !SIM_SCENARIOS.some(s => s.subject === ds.subject));
+                const pool = unused.length ? unused : DYNAMIC_OFFLINE_SCENARIOS;
+                const chosen = pool[Math.floor(Math.random() * pool.length)];
+                scenario = JSON.parse(JSON.stringify(chosen));
+                sourceLabel = 'Phish-Guard Cognitive Threat Simulator';
+            }
+
             SIM_SCENARIOS.push(scenario);
             currentSimIndex = SIM_SCENARIOS.length - 1;
             renderSimScenario();
 
             dom.simFeedbackArea.className = 'sim-feedback-area correct';
             dom.simFeedbackArea.innerHTML =
-                  '<div class="feedback-headline">✨ New AI-Generated Challenge Added</div>'
-                + '<div class="feedback-body">A fresh <strong>' + escapeHtml(scenario.category) + '</strong> scenario was generated by '
-                + (provider === 'openai' ? 'GPT-4o-mini' : 'Gemini 1.5 Flash') + ' — scenario ' + SIM_SCENARIOS.length + ' of ' + SIM_SCENARIOS.length + '. Apply your instincts!</div>';
+                  '<div class="feedback-headline">✨ New Scenario Challenge Activated</div>'
+                + '<div class="feedback-body">A fresh <strong>' + escapeHtml(scenario.category) + '</strong> scenario was synthesized by '
+                + escapeHtml(sourceLabel) + ' (Scenario ' + SIM_SCENARIOS.length + ' of ' + SIM_SCENARIOS.length + '). Test your instincts!</div>';
             dom.simFeedbackArea.classList.remove('hidden');
         } catch (err) {
             console.error('Scenario generation failed:', err);
             dom.simFeedbackArea.className = 'sim-feedback-area incorrect';
             dom.simFeedbackArea.innerHTML =
-                  '<div class="feedback-headline">⚠️ Generation Failed</div>'
-                + '<div class="feedback-body">' + escapeHtml(err.message || 'Could not generate the scenario.') + '</div>';
+                  '<div class="feedback-headline">⚠️ Generation Note</div>'
+                + '<div class="feedback-body">' + escapeHtml(err.message || 'Could not generate scenario.') + '</div>';
             dom.simFeedbackArea.classList.remove('hidden');
         } finally {
             dom.btnGenerateChallenge.disabled = false;
@@ -2708,11 +2850,14 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
 
         html += '<div class="export-actions-row">'
               + '<button type="button" class="btn-export" id="btnCopyUrlReport">📋 Copy Sandbox Dossier</button>'
+              + '<button type="button" class="btn-export btn-ask-copilot-inline" id="btnAskCopilotUrl">🤖 Ask AI Copilot to Analyze</button>'
               + '</div>';
 
         dom.urlResultArea.innerHTML = html;
 
         const copyBtn = $('#btnCopyUrlReport');
+        const copilotUrlBtn = $('#btnAskCopilotUrl');
+
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
                 let md = '# Phish-Guard Deep URL Sandbox Dossier\n\n';
@@ -2739,6 +2884,17 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
                     copyBtn.innerHTML = '✅ Copied!';
                     setTimeout(() => { copyBtn.innerHTML = oldText; }, 2000);
                 });
+            });
+        }
+
+        if (copilotUrlBtn) {
+            copilotUrlBtn.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Analyze this suspicious URL (${data.normalizedUrl}): explain the de-obfuscation findings, homoglyphs (${matrix.punycode.status}), redirects, risk score (${data.riskScore}/100), and how to block it across corporate web gateways.`,
+                        { scan: false, header: false, ioc: true, playbook: false }
+                    );
+                }
             });
         }
     }
@@ -3735,9 +3891,12 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
             ${findingsHtml}
             ${aiHtml}
 
-            <div style="text-align: right; margin-top: 14px;">
+            <div style="text-align: right; margin-top: 14px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
                 <button type="button" id="btnCopyPayloadReport" class="radar-export-btn">
                     📋 Copy SOC Incident Dossier (Markdown)
+                </button>
+                <button type="button" id="btnAskCopilotPayload" class="radar-export-btn btn-ask-copilot-inline" style="background: rgba(0, 255, 156, 0.12); border-color: rgba(0, 255, 156, 0.4); color: #00ff9c;">
+                    🤖 Ask AI Copilot: Reverse Engineer &amp; EDR Hunt
                 </button>
             </div>
         `;
@@ -3746,9 +3905,22 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
         dom.payloadResultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         const btnCopy = $('#btnCopyPayloadReport');
+        const btnCopilotPayload = $('#btnAskCopilotPayload');
+
         if (btnCopy) {
             btnCopy.addEventListener('click', () => {
                 copyPayloadReport(data);
+            });
+        }
+
+        if (btnCopilotPayload) {
+            btnCopilotPayload.addEventListener('click', () => {
+                if (window.PhishGuardCopilot) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Perform a reverse-engineering and threat hunt breakdown of this payload (Verdict: ${data.verdict}, Risk: ${data.riskScore}/100): explain the client-side JavaScript/Blob delivery technique, obfuscation patterns, and write Defender KQL and Sigma rules to detect execution.`,
+                        { scan: false, header: false, ioc: true, playbook: true }
+                    );
+                }
             });
         }
     }

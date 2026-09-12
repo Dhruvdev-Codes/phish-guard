@@ -424,6 +424,11 @@
                 </div>
                 <pre class="payload-code-body" id="pbBroadcastCodeBlock" style="color:#e2e8f0;"></pre>
             </div>
+            <div style="margin-top: 14px;">
+                <button type="button" class="btn-ask-copilot-inline" id="btnAskCopilotPlaybook" style="width: 100%; justify-content: center; padding: 10px 16px;">
+                    🤖 Ask AI Copilot: Incident Commander Guidance for ${escapeHtml(pb.title)}
+                </button>
+            </div>
         </div>`;
 
         container.innerHTML = html;
@@ -479,6 +484,20 @@
                         btnCopyBroadcast.innerText = '✅ Copied!';
                         setTimeout(() => { btnCopyBroadcast.innerText = orig; }, 1800);
                     });
+                }
+            });
+        }
+
+        const btnCopilotPlaybook = container.querySelector('#btnAskCopilotPlaybook');
+        if (btnCopilotPlaybook) {
+            btnCopilotPlaybook.addEventListener('click', () => {
+                const pb = PLAYBOOK_DATA[currentScenario];
+                const p = getParams();
+                if (window.PhishGuardCopilot && pb) {
+                    window.PhishGuardCopilot.askWithContext(
+                        `Act as the SOC Lead / Incident Commander for this ${pb.title} incident: Victim=${p.victimUser}, Attacker=${p.attackerSender}, MaliciousDomain=${p.maliciousDomain}. Provide a prioritized step-by-step executive triage checklist, containment PowerShell scripts, and communication protocol.`,
+                        { scan: false, header: false, ioc: true, playbook: true }
+                    );
                 }
             });
         }

@@ -32,10 +32,10 @@
         dom = {
             chatFeed: document.getElementById('copilotChatFeed'),
             input: document.getElementById('copilotInput'),
-            btnSend: document.getElementById('btnSendCopilotQuery'),
-            btnClear: document.getElementById('btnClearChat'),
-            btnExport: document.getElementById('btnExportChat'),
-            engineBadge: document.getElementById('copilotEngineName'),
+            btnSend: document.getElementById('btnCopilotSend') || document.getElementById('btnSendCopilotQuery'),
+            btnClear: document.getElementById('btnCopilotClear') || document.getElementById('btnClearChat'),
+            btnExport: document.getElementById('btnCopilotExport') || document.getElementById('btnExportChat'),
+            engineBadge: document.getElementById('copilotEngineBadge') || document.getElementById('copilotEngineName'),
             btnCtxScan: document.getElementById('btnCtxScan'),
             btnCtxHeader: document.getElementById('btnCtxHeader'),
             btnCtxIoc: document.getElementById('btnCtxIoc'),
@@ -562,22 +562,26 @@ I am your **AI Cybersecurity & Incident Response Assistant**. I can assist you w
     //  EVENT BINDINGS & LIFECYCLE
     // ================================================================
     function bindEvents() {
-        dom.btnSend.addEventListener('click', () => sendQuery());
+        if (dom.btnSend) {
+            dom.btnSend.addEventListener('click', () => sendQuery());
+        }
 
-        dom.input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendQuery();
-            }
-        });
+        if (dom.input) {
+            dom.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendQuery();
+                }
+            });
 
-        dom.input.addEventListener('input', () => {
-            dom.input.style.height = 'auto';
-            dom.input.style.height = Math.min(dom.input.scrollHeight, 180) + 'px';
-        });
+            dom.input.addEventListener('input', () => {
+                dom.input.style.height = 'auto';
+                dom.input.style.height = Math.min(dom.input.scrollHeight, 180) + 'px';
+            });
+        }
 
-        dom.btnClear.addEventListener('click', clearChat);
-        dom.btnExport.addEventListener('click', exportTranscript);
+        if (dom.btnClear) dom.btnClear.addEventListener('click', clearChat);
+        if (dom.btnExport) dom.btnExport.addEventListener('click', exportTranscript);
 
         const ctxMap = [
             { btn: dom.btnCtxScan, key: 'scan' },
@@ -595,15 +599,17 @@ I am your **AI Cybersecurity & Incident Response Assistant**. I can assist you w
             }
         });
 
-        dom.promptButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const prompt = btn.dataset.prompt;
-                if (prompt) {
-                    dom.input.value = prompt;
-                    sendQuery(prompt);
-                }
+        if (dom.promptButtons) {
+            dom.promptButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const prompt = btn.dataset.prompt;
+                    if (prompt) {
+                        if (dom.input) dom.input.value = prompt;
+                        sendQuery(prompt);
+                    }
+                });
             });
-        });
+        }
     }
     // ================================================================
     //  PUBLIC API FOR INTEGRATION
@@ -641,7 +647,7 @@ I am your **AI Cybersecurity & Incident Response Assistant**. I can assist you w
             }
 
             if (promptText) {
-                dom.input.value = promptText;
+                if (dom.input) dom.input.value = promptText;
                 setTimeout(() => sendQuery(promptText), 250);
             }
         },
