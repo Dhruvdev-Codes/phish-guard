@@ -22,13 +22,18 @@
     const PROVIDER_META = {
         gemini: {
             label: 'Google Gemini API Key',
-            opt: '(Free Tier)',
+            opt: '(Free Tier BYOK)',
             hintHtml: 'Free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.'
         },
         openai: {
             label: 'OpenAI API Key',
-            opt: '',
-            hintHtml: 'Requires a billed OpenAI account (GPT-4o-mini). No key? Use Gemini or the offline heuristic engine.'
+            opt: '(BYOK)',
+            hintHtml: 'Requires an OpenAI API key (<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>).'
+        },
+        claude: {
+            label: 'Anthropic Claude API Key',
+            opt: '(BYOK)',
+            hintHtml: 'Requires an Anthropic API key (<a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>).'
         },
         heuristic: {
             label: 'Built-in Heuristic Engine',
@@ -384,17 +389,18 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     const dom = {
         keyToggle:        $('#keyToggle'),
         keyPanel:         $('#keyPanel'),
-        aiProviderSelect: $('#aiProvider'),
+        aiProviderSelect: $('#ai-provider') || $('#aiProvider'),
+        aiModelSelect:    $('#ai-model') || $('#aiModel'),
         apiKeyLabel:      $('#apiKeyLabel'),
         apiKeyHint:       $('#apiKeyHint'),
-        apiKeyInput:      $('#apiKeyInput'),
+        apiKeyInput:      $('#ai-api-key') || $('#apiKeyInput'),
         vtInput:          $('#vtKey'),
-        messageInput:     $('#messageInput'),
-        scanButton:       $('#scanButton'),
+        messageInput:     $('#messageInput') || $('#message-input'),
+        scanButton:       $('#scanButton') || $('#analyze-button') || $('#analyzeBtn'),
         clearBtn:         $('#clearBtn'),
         loading:          $('#loading'),
         statusText:       $('#statusText'),
-        resultArea:       $('#resultArea'),
+        resultArea:       $('#resultArea') || $('#results'),
         sampleBtns:       $$('.btn-sample:not(.btn-header-sample)'),
 
         // -- Email Header & Authentication Inspector --
@@ -636,6 +642,13 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
                 const target = document.getElementById(btn.dataset.tab);
                 if (target) target.classList.add('active');
                 btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+                if (btn.dataset.tab === 'databaseTab' && window.PhishGuardDB && typeof window.PhishGuardDB.refreshUI === 'function') {
+                    window.PhishGuardDB.refreshUI();
+                }
+                if (btn.dataset.tab === 'copilotTab' && window.PhishGuardCopilot && typeof window.PhishGuardCopilot.onTabOpen === 'function') {
+                    window.PhishGuardCopilot.onTabOpen();
+                }
             });
         });
     }
@@ -646,31 +659,45 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     }
 
     function onProviderChange() {
+        if (!dom.aiProviderSelect) return;
         aiProvider = dom.aiProviderSelect.value;
         const meta = PROVIDER_META[aiProvider] || PROVIDER_META.gemini;
-        dom.apiKeyInput.disabled = (aiProvider === 'heuristic');
-        dom.apiKeyLabel.innerHTML = escapeHtml(meta.label) +
-            (meta.opt ? ' <span class="opt">' + escapeHtml(meta.opt) + '</span>' : '');
-        dom.apiKeyHint.innerHTML = meta.hintHtml;
+        if (dom.apiKeyInput) {
+            dom.apiKeyInput.disabled = (aiProvider === 'heuristic');
+        }
+        if (dom.apiKeyLabel) {
+            dom.apiKeyLabel.innerHTML = escapeHtml(meta.label) +
+                (meta.opt ? ' <span class="opt">' + escapeHtml(meta.opt) + '</span>' : '');
+        }
+        if (dom.apiKeyHint) {
+            dom.apiKeyHint.innerHTML = meta.hintHtml;
+        }
+
+        // Synchronize model dropdown if available
+        if (window.PhishGuardAISettings && typeof window.PhishGuardAISettings.populateModelDropdown === 'function') {
+            window.PhishGuardAISettings.populateModelDropdown(aiProvider);
+        }
     }
 
     function setLoading(on) {
-        dom.scanButton.disabled = on;
-        dom.loading.classList.toggle('hidden', !on);
+        if (dom.scanButton) dom.scanButton.disabled = on;
+        if (dom.loading) dom.loading.classList.toggle('hidden', !on);
     }
 
     function setStatus(msg) {
-        dom.statusText.textContent = msg;
+        if (dom.statusText) dom.statusText.textContent = msg;
     }
 
     function clearResults() {
-        dom.resultArea.innerHTML = '';
+        if (dom.resultArea) dom.resultArea.innerHTML = '';
         lastScanData = null;
     }
 
     function showError(msg) {
-        dom.resultArea.innerHTML =
-            '<div class="error-box">' + escapeHtml(msg) + '</div>';
+        if (dom.resultArea) {
+            dom.resultArea.innerHTML =
+                '<div class="error-box">' + escapeHtml(msg) + '</div>';
+        }
     }
 
     function escapeHtml(str) {
@@ -684,7 +711,7 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     //  MAIN SCAN HANDLER
     // ================================================================
     async function handleScan() {
-        const message = dom.messageInput.value.trim();
+        const message = (dom.messageInput ? dom.messageInput.value : '').trim();
         if (!message) return showError('Please paste a message or select a Quick Test Sample above.');
 
         setLoading(true);
@@ -702,37 +729,60 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
                 vtResults = await scanURLsWithVirusTotal(urls, vtKey);
             }
 
-            // 3 - Engine Selection: Gemini / OpenAI / Heuristic (with Auto-Fallback)
+            // 3 - Engine Selection: Gemini / OpenAI / Claude / Heuristic (with Auto-Fallback)
             let analysis = null;
             let engineUsed = '';
 
-            if (aiProvider === 'gemini' && apiKey) {
+            const settings = (window.PhishGuardAISettings && typeof window.PhishGuardAISettings.getSettings === 'function')
+                ? window.PhishGuardAISettings.getSettings()
+                : {
+                    provider: aiProvider,
+                    apiKey: apiKey || (dom.apiKeyInput ? dom.apiKeyInput.value.trim() : ''),
+                    model: dom.aiModelSelect ? dom.aiModelSelect.value : ''
+                };
+
+            const currentProvider = settings.provider || aiProvider || 'gemini';
+            const currentKey = settings.apiKey || apiKey || (dom.apiKeyInput ? dom.apiKeyInput.value.trim() : '');
+            const currentModel = settings.model || (dom.aiModelSelect ? dom.aiModelSelect.value : '');
+
+            if (currentProvider === 'gemini' && currentKey) {
                 try {
-                    setStatus('Running Google Gemini 1.5 Flash neural + psych analysis...');
-                    analysis = await analyzeWithGemini(message, urls, apiKey);
-                    engineUsed = 'AI (Gemini 1.5 Flash)';
+                    setStatus(`Running Google Gemini (${currentModel || 'Gemini Flash'}) neural + psych analysis...`);
+                    analysis = await analyzeWithGemini(message, urls, currentKey, currentModel || 'gemini-flash-latest');
+                    engineUsed = `AI (Gemini ${currentModel || 'Gemini Flash'})`;
                 } catch (apiErr) {
-                    console.warn('Gemini API call failed, falling back to heuristic engine:', apiErr);
-                    setStatus('Gemini API unreachable — using Built-in Cognitive Heuristic Engine...');
+                    console.error('Gemini API call failed:', apiErr);
+                    setStatus(`⚠️ Gemini API error (${apiErr.message}) — Falling back to Cognitive Heuristic Engine...`);
                     analysis = analyzeHeuristics(message, urls);
-                    engineUsed = 'Built-in Cognitive Heuristic Engine (Auto-Fallback)';
+                    engineUsed = `Built-in Cognitive Heuristic Engine (Auto-Fallback: ${apiErr.message})`;
                 }
-            } else if (aiProvider === 'openai' && apiKey) {
+            } else if (currentProvider === 'openai' && currentKey) {
                 try {
-                    setStatus('Running OpenAI GPT-4o-mini neural analysis...');
-                    analysis = await analyzeWithOpenAI(message, urls, apiKey);
-                    engineUsed = 'AI (GPT-4o-mini)';
+                    setStatus(`Running OpenAI (${currentModel || 'GPT-4o-mini'}) neural analysis...`);
+                    analysis = await analyzeWithOpenAI(message, urls, currentKey, currentModel || 'gpt-4o-mini');
+                    engineUsed = `AI (OpenAI ${currentModel || 'GPT-4o-mini'})`;
                 } catch (apiErr) {
-                    console.warn('OpenAI API call failed, falling back to heuristic engine:', apiErr);
-                    setStatus('OpenAI API unreachable — using Built-in Cognitive Heuristic Engine...');
+                    console.error('OpenAI API call failed:', apiErr);
+                    setStatus(`⚠️ OpenAI API error (${apiErr.message}) — Falling back to Cognitive Heuristic Engine...`);
                     analysis = analyzeHeuristics(message, urls);
-                    engineUsed = 'Built-in Cognitive Heuristic Engine (Auto-Fallback)';
+                    engineUsed = `Built-in Cognitive Heuristic Engine (Auto-Fallback: ${apiErr.message})`;
+                }
+            } else if (currentProvider === 'claude' && currentKey) {
+                try {
+                    setStatus(`Running Anthropic Claude (${currentModel || 'Claude 3.5 Sonnet'}) neural analysis...`);
+                    analysis = await analyzeWithClaude(message, urls, currentKey, currentModel || 'claude-3-5-sonnet-latest');
+                    engineUsed = `AI (Claude ${currentModel || 'Claude 3.5 Sonnet'})`;
+                } catch (apiErr) {
+                    console.error('Claude API call failed:', apiErr);
+                    setStatus(`⚠️ Claude API error (${apiErr.message}) — Falling back to Cognitive Heuristic Engine...`);
+                    analysis = analyzeHeuristics(message, urls);
+                    engineUsed = `Built-in Cognitive Heuristic Engine (Auto-Fallback: ${apiErr.message})`;
                 }
             } else {
                 setStatus('Running built-in Heuristic + Cognitive Analysis Engine...');
-                await new Promise(r => setTimeout(r, 450));
+                await new Promise(r => setTimeout(r, 400));
                 analysis = analyzeHeuristics(message, urls);
-                engineUsed = apiKey ? 'Local Heuristic Engine' : 'Built-in Cognitive SOC Engine (Zero-Key)';
+                engineUsed = currentKey ? 'Local Heuristic Engine' : 'Built-in Cognitive SOC Engine (Zero-Key)';
             }
 
             // Ensure results always include psych + plain-English layers
@@ -758,6 +808,15 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
             };
 
             renderResults(analysis, urls, vtResults, engineUsed);
+
+            // Persist incident to Forensic Threat Vault
+            try {
+                if (window.PhishGuardDB && typeof window.PhishGuardDB.recordScan === 'function') {
+                    window.PhishGuardDB.recordScan(lastScanData);
+                }
+            } catch (dbErr) {
+                console.warn('[DB Scan Recording Error]:', dbErr);
+            }
 
         } catch (err) {
             console.error('Phish-Guard scan error:', err);
@@ -1020,9 +1079,9 @@ Message-ID: <CAPO7=X9w2jk1818290@mail.gmail.com>`
     }
 
     // ================================================================
-    //  OPENAI GPT-4o-mini ANALYSIS ENGINE
+    //  OPENAI ANALYSIS ENGINE
     // ================================================================
-    async function analyzeWithOpenAI(message, urls, apiKey) {
+    async function analyzeWithOpenAI(message, urls, apiKey, model = 'gpt-4o-mini') {
         const systemPrompt = `You are a Senior Cybersecurity Threat Analyst specializing in Social Engineering, MITRE ATT&CK T1566 (Phishing), BEC (Business Email Compromise), and cognitive psychology.
 Analyze the provided message text and list of extracted URLs.
 
@@ -1058,7 +1117,7 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: model || 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user',   content: userContent   }
@@ -1089,9 +1148,9 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
     }
 
     // ================================================================
-    //  GOOGLE GEMINI 1.5 FLASH ANALYSIS ENGINE
+    //  GOOGLE GEMINI ANALYSIS ENGINE
     // ================================================================
-    async function analyzeWithGemini(message, urls, apiKey) {
+    async function analyzeWithGemini(message, urls, apiKey, model = 'gemini-flash-latest') {
         const systemPrompt = `You are a Senior Cybersecurity Threat Analyst specializing in Social Engineering, MITRE ATT&CK T1566 (Phishing), BEC (Business Email Compromise), and cognitive psychology.
 Analyze the provided message text and list of extracted URLs.
 
@@ -1119,9 +1178,10 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
 }`;
 
         const userContent = `Message to analyze:\n"""\n${message}\n"""\n\nExtracted URLs found in message:\n${urls.length ? urls.join('\n') : 'None'}`;
+        const targetModel = model || 'gemini-flash-latest';
 
         const resp = await fetch(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(apiKey),
+            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=` + encodeURIComponent(apiKey),
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1157,6 +1217,76 @@ Respond ONLY with a valid, raw JSON object matching this schema (no markdown fen
             data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
             data.candidates[0].content.parts[0].text;
         if (!rawContent) throw new Error('Gemini returned an empty response.');
+
+        let jsonText = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/g, '').trim();
+        return JSON.parse(jsonText);
+    }
+
+    // ================================================================
+    //  ANTHROPIC CLAUDE ANALYSIS ENGINE
+    // ================================================================
+    async function analyzeWithClaude(message, urls, apiKey, model = 'claude-3-5-sonnet-latest') {
+        const systemPrompt = `You are a Senior Cybersecurity Threat Analyst specializing in Social Engineering, MITRE ATT&CK T1566 (Phishing), BEC (Business Email Compromise), and cognitive psychology.
+Analyze the provided message text and list of extracted URLs.
+
+Respond ONLY with a valid, raw JSON object matching this schema (no markdown fences, no explanatory text outside JSON):
+{
+  "riskScore": <integer 0 to 100>,
+  "verdict": "<SAFE | SUSPICIOUS | PHISHING>",
+  "techniques": ["<MITRE ATT&CK or Social Engineering technique tag>"],
+  "summary": "<2-3 sentence concise threat analysis explaining why the message is safe, suspicious, or malicious>",
+  "recommendations": ["<Actionable mitigation step 1>", "<Actionable mitigation step 2>", "<Actionable mitigation step 3>"],
+  "psychTriggers": [
+    {
+      "name": "<Psychological tactic exploited, e.g. False Urgency, Authority Impersonation, Fear & Intimidation, Curiosity Bait, Scarcity, Social Proof, Credential Harvesting>",
+      "icon": "<single emoji>",
+      "severity": "<high | med | low>",
+      "quote": "<exact short phrase from the message that triggers this bias>",
+      "description": "<one sentence explaining how the attacker exploits this cognitive bias>"
+    }
+  ],
+  "plainEnglish": {
+    "tlDr": "<one sentence plain-language verdict>",
+    "whatWeFound": "<2-3 sentences in non-technical language>",
+    "whyItMatters": "<1-2 sentences on real-world risk>"
+  }
+}`;
+
+        const userContent = `Message to analyze:\n"""\n${message}\n"""\n\nExtracted URLs found in message:\n${urls.length ? urls.join('\n') : 'None'}`;
+        const targetModel = model || 'claude-3-5-sonnet-latest';
+
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: targetModel,
+                system: systemPrompt,
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: userContent }]
+            })
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try {
+                const errData = await resp.json();
+                errText = (errData.error && errData.error.message) || resp.statusText;
+            } catch (_) {
+                errText = await resp.text();
+            }
+            if (resp.status === 401) throw new Error('Claude API Key is invalid. Please check your key.');
+            if (resp.status === 429) throw new Error('Claude Rate limit reached. Please wait or check your Anthropic plan.');
+            throw new Error(`Claude API error (${resp.status}): ${errText}`);
+        }
+
+        const data = await resp.json();
+        const rawContent = data.content && data.content[0] && data.content[0].text;
+        if (!rawContent) throw new Error('Claude returned an empty response.');
 
         let jsonText = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/g, '').trim();
         return JSON.parse(jsonText);
@@ -1576,9 +1706,10 @@ Return strictly valid JSON with this exact schema (no markdown fences):
         return d;
     }
 
-    async function generateScenarioGemini(apiKey) {
+    async function generateScenarioGemini(apiKey, model = 'gemini-flash-latest') {
+        const targetModel = model || 'gemini-flash-latest';
         const resp = await fetch(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(apiKey),
+            'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(targetModel) + ':generateContent?key=' + encodeURIComponent(apiKey),
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1623,6 +1754,34 @@ Return strictly valid JSON with this exact schema (no markdown fences):
         if (!content) throw new Error('OpenAI returned an empty scenario.');
         return JSON.parse(content);
     }
+    async function generateScenarioClaude(apiKey, model = 'claude-3-5-sonnet-latest') {
+        const targetModel = model || 'claude-3-5-sonnet-latest';
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: targetModel,
+                system: 'You are a security awareness training content designer. Respond ONLY with valid JSON matching the requested schema.',
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: buildScenarioPrompt() }]
+            })
+        });
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('Claude generate error (' + resp.status + '): ' + errText);
+        }
+        const data = await resp.json();
+        const content = data.content?.[0]?.text;
+        if (!content) throw new Error('Claude returned an empty scenario.');
+        return JSON.parse(content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/g, '').trim());
+    }
+
 
     const DYNAMIC_OFFLINE_SCENARIOS = [
         {
@@ -1703,14 +1862,27 @@ Return strictly valid JSON with this exact schema (no markdown fences):
             let scenario = null;
             let sourceLabel = '';
 
-            if (apiKey) {
-                const provider = aiProvider === 'openai' ? 'openai' : 'gemini';
+            const settings = (window.PhishGuardAISettings && typeof window.PhishGuardAISettings.getSettings === 'function')
+                ? window.PhishGuardAISettings.getSettings()
+                : { provider: aiProvider, apiKey: apiKey, model: '' };
+            const curProvider = settings.provider || aiProvider;
+            const curKey = settings.apiKey || apiKey;
+            const curModel = settings.model || '';
+
+            if (curKey && curProvider !== 'heuristic') {
                 try {
-                    const raw = provider === 'openai'
-                        ? await generateScenarioOpenAI(apiKey)
-                        : await generateScenarioGemini(apiKey);
+                    let raw = null;
+                    if (curProvider === 'claude') {
+                        raw = await generateScenarioClaude(curKey, curModel || 'claude-3-5-sonnet-latest');
+                        sourceLabel = 'Anthropic Claude';
+                    } else if (curProvider === 'openai') {
+                        raw = await generateScenarioOpenAI(curKey);
+                        sourceLabel = 'OpenAI GPT-4o-mini';
+                    } else {
+                        raw = await generateScenarioGemini(curKey, curModel || 'gemini-flash-latest');
+                        sourceLabel = 'Google Gemini Flash';
+                    }
                     scenario = normalizeGeneratedScenario(raw);
-                    sourceLabel = provider === 'openai' ? 'OpenAI GPT-4o-mini' : 'Google Gemini 1.5 Flash';
                 } catch (apiErr) {
                     console.warn('Online AI scenario generation failed, using dynamic local engine:', apiErr);
                 }
@@ -2050,8 +2222,9 @@ Return strictly valid JSON with this exact schema (no markdown fences):
         };
     }
 
-    async function analyzeHeadersWithGemini(rawHeaders, key) {
-        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key);
+    async function analyzeHeadersWithGemini(rawHeaders, key, model = 'gemini-flash-latest') {
+        const targetModel = model || 'gemini-flash-latest';
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(targetModel) + ':generateContent?key=' + encodeURIComponent(key);
         const prompt = `You are a Principal Email Security & Forensic Analyst.
 Analyze the following raw email RFC 5322 headers for spoofing, SPF/DKIM/DMARC status, relay anomalies, and sender impersonation.
 Return ONLY valid JSON matching this schema:
@@ -2134,6 +2307,52 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
         if (!content) throw new Error('OpenAI returned an empty response.');
         return JSON.parse(content);
     }
+    async function analyzeHeadersWithClaude(rawHeaders, key, model = 'claude-3-5-sonnet-20241022') {
+        const prompt = `You are a Principal Email Security & Forensic Analyst.
+Analyze the following raw RFC 5322 email headers. Return valid JSON only with this structure:
+{
+  "riskScore": <0-100>,
+  "verdict": "SAFE | SUSPICIOUS | SPOOFED / PHISHING",
+  "verdictClass": "verdict-low | verdict-medium | verdict-high",
+  "summary": "<2 sentence forensic summary>",
+  "recommendations": ["<rec 1>", "<rec 2>"],
+  "findings": [
+    { "type": "<auth|routing|spoofing>", "label": "<title>", "desc": "<detail>", "badge": "CRITICAL|SUSPICIOUS|INFORMATIONAL", "badgeClass": "badge-alert|badge-warn|badge-info" }
+  ]
+}
+
+Raw Headers:
+${rawHeaders.substring(0, 5000)}`;
+
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: model || 'claude-3-5-sonnet-20241022',
+                system: 'You are a Principal Email Security & Forensic Analyst. Always respond with valid JSON only.',
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        if (!resp.ok) {
+            let errText = '';
+            try { errText = (await resp.json()).error?.message || resp.statusText; } catch (_) { errText = await resp.text(); }
+            throw new Error('Claude Header API error (' + resp.status + '): ' + errText);
+        }
+
+        const data = await resp.json();
+        const content = data.content?.[0]?.text;
+        if (!content) throw new Error('Claude returned an empty response.');
+        let cleanJson = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/g, '').trim();
+        return JSON.parse(cleanJson);
+    }
+
 
     async function handleHeaderScan() {
         const rawText = dom.headerInput ? dom.headerInput.value.trim() : '';
@@ -2150,12 +2369,25 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
             const heuristicResult = analyzeHeadersHeuristic(rawText);
             let finalResult = heuristicResult;
 
-            if (aiProvider !== 'heuristic' && apiKey) {
-                setHeaderStatus('Running deep AI forensic analysis (' + (aiProvider === 'gemini' ? 'Gemini 1.5 Flash' : 'GPT-4o-mini') + ')…');
+            const settings = (window.PhishGuardAISettings && typeof window.PhishGuardAISettings.getSettings === 'function')
+                ? window.PhishGuardAISettings.getSettings()
+                : { provider: aiProvider, apiKey: apiKey, model: '' };
+            const curProvider = settings.provider || aiProvider;
+            const curKey = settings.apiKey || apiKey;
+            const curModel = settings.model || '';
+
+            if (curProvider !== 'heuristic' && curKey) {
+                const engineLabel = curProvider === 'claude' ? 'Claude' : (curProvider === 'openai' ? 'GPT-4o-mini' : 'Gemini Flash');
+                setHeaderStatus('Running deep AI forensic analysis (' + engineLabel + ')…');
                 try {
-                    const aiData = aiProvider === 'openai'
-                        ? await analyzeHeadersWithOpenAI(rawText, apiKey)
-                        : await analyzeHeadersWithGemini(rawText, apiKey);
+                    let aiData = null;
+                    if (curProvider === 'claude') {
+                        aiData = await analyzeHeadersWithClaude(rawText, curKey, curModel || 'claude-3-5-sonnet-latest');
+                    } else if (curProvider === 'openai') {
+                        aiData = await analyzeHeadersWithOpenAI(rawText, curKey);
+                    } else {
+                        aiData = await analyzeHeadersWithGemini(rawText, curKey, curModel || 'gemini-flash-latest');
+                    }
 
                     if (aiData.findings && Array.isArray(aiData.findings) && aiData.findings.length) {
                         heuristicResult.findings = aiData.findings;
@@ -2165,7 +2397,7 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
                     if (aiData.verdictClass) heuristicResult.verdictClass = aiData.verdictClass;
                     if (aiData.summary) heuristicResult.summary = aiData.summary;
                     if (aiData.recommendations) heuristicResult.recommendations = aiData.recommendations;
-                    heuristicResult.engine = aiProvider === 'openai' ? 'OpenAI GPT-4o-mini + Local Parser' : 'Google Gemini 1.5 Flash + Local Parser';
+                    heuristicResult.engine = (curProvider === 'claude' ? 'Anthropic Claude' : (curProvider === 'openai' ? 'OpenAI GPT-4o-mini' : 'Google Gemini Flash')) + ' + Local Parser';
                 } catch (aiErr) {
                     console.warn('AI header forensic analysis failed, fallback to local heuristics:', aiErr);
                 }
@@ -2178,6 +2410,15 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
             };
 
             renderHeaderResults(heuristicResult);
+
+            // Persist incident to Forensic Threat Vault
+            try {
+                if (window.PhishGuardDB && typeof window.PhishGuardDB.recordHeaderScan === 'function') {
+                    window.PhishGuardDB.recordHeaderScan(lastHeaderScanData);
+                }
+            } catch (dbErr) {
+                console.warn('[DB Header Recording Error]:', dbErr);
+            }
         } catch (err) {
             console.error('Header analysis failed:', err);
             dom.headerResultArea.innerHTML =
@@ -2617,7 +2858,8 @@ Analyze the following raw RFC 5322 email headers. Return valid JSON only.`;
         };
     }
 
-    async function analyzeUrlWithGemini(urlStr, apiKey) {
+    async function analyzeUrlWithGemini(urlStr, apiKey, model = 'gemini-flash-latest') {
+        const targetModel = model || 'gemini-flash-latest';
         const prompt = `You are a Principal Cyber Forensics Analyst specializing in Quishing and URL evasion (IDN Homographs, IP disguises, open redirects, subdomain brand stacking).
 
 Analyze this target URL:
@@ -2641,7 +2883,7 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
     "Actionable recommendation"
   ]
 }`;
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const resp = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2663,7 +2905,8 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
         return JSON.parse(rawContent);
     }
 
-    async function analyzeUrlWithOpenAI(urlStr, apiKey) {
+    async function analyzeUrlWithOpenAI(urlStr, apiKey, model = 'gpt-4o-mini') {
+        const targetModel = model || 'gpt-4o-mini';
         const prompt = `You are a Principal Cyber Forensics Analyst specializing in Quishing and URL evasion (IDN Homographs, IP disguises, open redirects, subdomain brand stacking).
 
 Analyze this target URL:
@@ -2694,7 +2937,7 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: OPENAI_MODEL,
+                model: targetModel,
                 messages: [{ role: 'user', content: prompt }],
                 response_format: { type: "json_object" },
                 temperature: 0.1
@@ -2737,7 +2980,7 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
             }
 
             if (aiProvider !== 'heuristic' && apiKey) {
-                setUrlStatus('Running deep AI forensic URL sandbox (' + (aiProvider === 'gemini' ? 'Gemini 1.5 Flash' : 'GPT-4o-mini') + ')…');
+                setUrlStatus('Running deep AI forensic URL sandbox (' + (aiProvider === 'gemini' ? 'Google Gemini' : 'GPT-4o-mini') + ')…');
                 try {
                     const aiData = aiProvider === 'openai'
                         ? await analyzeUrlWithOpenAI(heuristicResult.normalizedUrl, apiKey)
@@ -2749,7 +2992,7 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
                     if (aiData.verdictClass) heuristicResult.verdictClass = aiData.verdictClass;
                     if (aiData.summary) heuristicResult.summary = aiData.summary;
                     if (aiData.recommendations) heuristicResult.recommendations = aiData.recommendations;
-                    heuristicResult.engine = aiProvider === 'openai' ? 'OpenAI GPT-4o-mini + Deep URL Sandbox' : 'Google Gemini 1.5 Flash + Deep URL Sandbox';
+                    heuristicResult.engine = aiProvider === 'openai' ? 'OpenAI GPT-4o-mini + Deep URL Sandbox' : 'Google Gemini + Deep URL Sandbox';
                 } catch (aiErr) {
                     console.warn('AI URL forensic sandbox fallback to heuristics:', aiErr);
                 }
@@ -2762,6 +3005,15 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
             };
 
             renderUrlResults(heuristicResult);
+
+            // Persist incident to Forensic Threat Vault
+            try {
+                if (window.PhishGuardDB && typeof window.PhishGuardDB.recordQuishingScan === 'function') {
+                    window.PhishGuardDB.recordQuishingScan(lastUrlScanData);
+                }
+            } catch (dbErr) {
+                console.warn('[DB Quishing Recording Error]:', dbErr);
+            }
         } catch (err) {
             console.error('URL Sandbox failed:', err);
             dom.urlResultArea.innerHTML =
@@ -2918,6 +3170,19 @@ Respond with ONLY a single valid JSON object adhering strictly to this schema:
                 radarFilterCategory = 'all';
                 radarSearchQuery = '';
                 renderRadarResults(results);
+
+                // Persist incident to Forensic Threat Vault
+                try {
+                    if (window.PhishGuardDB && typeof window.PhishGuardDB.recordRadarScan === 'function') {
+                        window.PhishGuardDB.recordRadarScan({
+                            domain: raw,
+                            results: results,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                } catch (dbErr) {
+                    console.warn('[DB Radar Recording Error]:', dbErr);
+                }
             } catch (err) {
                 showRadarError('Error generating lookalikes: ' + err.message);
             } finally {
@@ -3560,9 +3825,9 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
 
                 // Check if AI is enabled for deep code summary
                 if (aiProvider === 'gemini' && apiKey) {
-                    setPayloadLoading(true, 'Synthesizing neural reverse-engineering summary with Gemini 1.5 Flash…');
+                    setPayloadLoading(true, 'Synthesizing neural reverse-engineering summary with Gemini Flash…');
                     analysis.aiSummary = await callGeminiPayloadAnalysis(raw, analysis);
-                    analysis.engine = 'Google Gemini 1.5 Flash';
+                    analysis.engine = 'Google Gemini Flash';
                 } else if (aiProvider === 'openai' && apiKey) {
                     setPayloadLoading(true, 'Synthesizing neural reverse-engineering summary with GPT-4o-mini…');
                     analysis.aiSummary = await callOpenAiPayloadAnalysis(raw, analysis);
@@ -3572,7 +3837,17 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
                     analysis.engine = 'Local Payload De-obfuscation Engine';
                 }
 
+                analysis.raw = raw;
                 renderPayloadResults(analysis);
+
+                // Persist incident to Forensic Threat Vault
+                try {
+                    if (window.PhishGuardDB && typeof window.PhishGuardDB.recordPayloadScan === 'function') {
+                        window.PhishGuardDB.recordPayloadScan(analysis);
+                    }
+                } catch (dbErr) {
+                    console.warn('[DB Payload Recording Error]:', dbErr);
+                }
             } catch (err) {
                 showPayloadError('Error analyzing payload: ' + err.message);
             } finally {
@@ -3959,8 +4234,9 @@ Be concise, authoritative, and practical. Format with clear headings and bullet 
         });
     }
 
-    async function callGeminiPayloadAnalysis(raw, analysis) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    async function callGeminiPayloadAnalysis(raw, analysis, model = 'gemini-flash-latest') {
+        const targetModel = model || 'gemini-flash-latest';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const prompt = `You are a Principal SOC Malware & Phishing Reverse Engineer. Analyze this suspicious payload snippet or HTML smuggling attachment:
 ${raw.substring(0, 3000)}
 
@@ -4120,10 +4396,31 @@ Provide a concise, expert SOC triage briefing formatted with clear headings:
     window.PhishGuardContext = {
         getLastScan: () => lastScanData,
         getLastHeaderScan: () => lastHeaderScanData,
-        getAiProvider: () => aiProvider,
-        getApiKey: () => apiKey || dom.apiKeyInput?.value?.trim() || '',
+        getAiProvider: () => {
+            if (typeof getAISettings === 'function') {
+                const s = getAISettings();
+                if (s.provider) return s.provider;
+            }
+            return aiProvider || dom.aiProviderSelect?.value || 'gemini';
+        },
+        getApiKey: () => {
+            if (typeof getAISettings === 'function') {
+                const s = getAISettings();
+                if (s.apiKey) return s.apiKey;
+            }
+            return apiKey || dom.apiKeyInput?.value?.trim() || '';
+        },
+        getModel: () => {
+            if (typeof getAISettings === 'function') {
+                const s = getAISettings();
+                if (s.model) return s.model;
+            }
+            return dom.aiModelSelect?.value || '';
+        },
         getExtractedIOCs: () => window.PhishGuardIOCStudio?.getExtractedIOCs?.() || null,
-        getPlaybookState: () => window.PhishGuardPlaybooks?.getCurrentState?.() || null
+        getExtractedIocs: () => window.PhishGuardIOCStudio?.getExtractedIOCs?.() || null,
+        getPlaybookState: () => window.PhishGuardPlaybooks?.getCurrentState?.() || null,
+        getActivePlaybook: () => window.PhishGuardPlaybooks?.getCurrentState?.() || null
     };
 
 })();
