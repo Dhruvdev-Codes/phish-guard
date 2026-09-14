@@ -13,8 +13,9 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 ## ✨ Key Features
 
 - **Multi-Model Detection Architecture:**
-  - 🤖 **Google Gemini 1.5 Flash (Free Tier BYOK):** Fast, high-capacity neural social engineering & cognitive manipulation analysis.
-  - 🤖 **OpenAI GPT-4o-mini:** Structured JSON threat modeling & MITRE ATT&CK categorization.
+  - 🤖 **Google Gemini (Free Tier BYOK):** Auto-updating `gemini-flash-latest`, `gemini-3.1-flash-lite`, and `gemini-2.5-flash/pro` for high-capacity neural social engineering & cognitive manipulation analysis.
+  - 🤖 **OpenAI (GPT-4o-mini / GPT-4o):** Structured JSON threat modeling & MITRE ATT&CK categorization.
+  - 🤖 **Anthropic Claude (Claude 3.5 / 3.7):** Deep heuristic reasoning & forensic incident deconstruction.
   - ⚡ **Local Cognitive Heuristic Engine (Zero-Key Offline Mode):** Built-in cybersecurity engine analyzing urgency, fear, authority pressure, brand spoofing, IP URLs, and risky TLDs without external API calls.
 - **📨 Email Header & Spoofing Inspector:**
   - Full RFC 5322 MIME header parsing directly in browser (Received hops, Authentication-Results, From, Return-Path, DKIM-Signature).
@@ -111,8 +112,9 @@ A modern client-side cybersecurity web application designed to detect phishing, 
 | Provider | Purpose | Status | Endpoint |
 |---|---|---|---|
 | **Built-in Heuristic** | Fast regex & semantic cognitive scoring | Always Active | Local Browser Engine |
-| **Google Gemini** | Gemini 1.5 Flash deep NLP reasoning | Free Tier (BYOK) | `generativelanguage.googleapis.com` |
-| **OpenAI** | GPT-4o-mini deep NLP reasoning | Optional (BYOK) | `api.openai.com/v1` |
+| **Google Gemini** | Auto-updating Flash (`gemini-flash-latest`), 3.1 Flash-Lite, 2.5 Flash/Pro | Free Tier (BYOK) | `generativelanguage.googleapis.com` |
+| **OpenAI** | GPT-4o-mini, GPT-4o, o3-mini | Optional (BYOK) | `api.openai.com/v1` |
+| **Anthropic Claude** | Claude 3.5 / 3.7 Sonnet & Haiku | Optional (BYOK) | `api.anthropic.com/v1` |
 | **VirusTotal** | Real-time URL threat reputation | Optional (BYOK) | `virustotal.com/api/v3` |
 
 > 🔒 **Zero-Persistence Guarantee:** Keys are never stored in `localStorage`, cookies, or sent to any custom server.

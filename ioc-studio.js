@@ -462,6 +462,25 @@ index=endpoint sourcetype=sysmon EventCode=1
             renderGrid(_allIOCs);
             updateStats(_allIOCs);
             renderRule(_allIOCs, _activeRule);
+
+            try {
+                if (window.PhishGuardDB && typeof window.PhishGuardDB.saveRecord === 'function' && _allIOCs.length > 0) {
+                    const domains = _allIOCs.filter(i => i.type === 'domains').map(i => i.value);
+                    const ips = _allIOCs.filter(i => i.type === 'ips').map(i => i.value);
+                    const hashes = _allIOCs.filter(i => i.type === 'hash').map(i => i.value);
+                    window.PhishGuardDB.saveRecord({
+                        type: 'ioc',
+                        title: `IOC Extraction (${_allIOCs.length} Artifacts)`,
+                        summary: `Extracted ${_allIOCs.length} indicators (${domains.length} domains, ${ips.length} IPs, ${hashes.length} hashes).`,
+                        riskScore: 70,
+                        verdict: 'SUSPICIOUS',
+                        tags: ["CTI Studio", "STIX 2.1", `${_allIOCs.length} IOCs`],
+                        data: { rawText: raw, iocs: _allIOCs, domains, ips, hashes }
+                    });
+                }
+            } catch (dbErr) {
+                console.warn('[DB IOC Recording Error]:', dbErr);
+            }
         });
 
         // Defang toggle
