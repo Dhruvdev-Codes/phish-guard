@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Phish-Guard - AI & Cognitive Social Engineering Platform
  * ---------------------------------------------------------
  * Multi-Model BYOK Architecture:

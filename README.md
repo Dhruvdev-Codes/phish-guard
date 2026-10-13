@@ -1,4 +1,4 @@
-﻿# Phish-Guard 🛡️
+# Phish-Guard 🛡️
 
 **AI & Cognitive Social Engineering Analyzer & Security Awareness Lab**
 
