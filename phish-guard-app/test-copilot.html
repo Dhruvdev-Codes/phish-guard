@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phish-Guard AI Copilot Test Suite</title>
+    <style>
+        body { background: #090d14; color: #f1f5f9; font-family: sans-serif; padding: 24px; }
+        .test-card { background: #0f172a; border: 1px solid rgba(0,255,156,0.2); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+        .pass { color: #00ff9c; font-weight: bold; }
+        .fail { color: #ef4444; font-weight: bold; }
+        .query-label { color: #38bdf8; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; background: rgba(56,189,248,0.15); color: #38bdf8; }
+        pre { background: #050811; padding: 10px; border-radius: 6px; overflow-x: auto; color: #cbd5e1; font-size: 0.85rem; }
+        .summary { padding: 12px; border: 1px solid #00ff9c; border-radius: 6px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🤖 Copilot Interactive Test Suite</h1>
+    <div class="summary" id="summary">Running tests...</div>
+    <div id="results"></div>
+
+    <div style="position: absolute; left: -9999px; top: -9999px; width: 600px; height: 400px; overflow: hidden;">
+        <div id="copilotChatFeed"></div>
+        <textarea id="copilotInput"></textarea>
+        <button id="btnCopilotSend"></button>
+        <button id="btnCopilotClear"></button>
+        <button id="btnCopilotExport"></button>
+        <span id="copilotEngineBadge"></span>
+        <button id="btnCtxScan"></button>
+        <button id="btnCtxHeader"></button>
+        <button id="btnCtxIoc"></button>
+        <button id="btnCtxPlaybook"></button>
+    </div>
+
+    <script src="copilot.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.PhishGuardCopilot && window.PhishGuardCopilot.init) {
+                window.PhishGuardCopilot.init();
+            }
+
+            const tests = [
+                { q: "hello", must: ["Phish-Guard AI Cyber Copilot"], forbid: ["Regarding your inquiry", "Threat Landscape: Social"] },
+                { q: "hi there", must: ["Phish-Guard AI Cyber Copilot"], forbid: ["Regarding your inquiry"] },
+                { q: "good morning", must: ["Phish-Guard AI Cyber Copilot"], forbid: ["Regarding your inquiry"] },
+                { q: "what ai model are you using", must: ["Phish-Guard AI Copilot", "Gemini", "OpenAI"], forbid: ["Regarding your inquiry"] },
+                { q: "who are you", must: ["Phish-Guard AI Copilot", "Zero-Key"], forbid: ["Regarding your inquiry"] },
+                { q: "how do you work", must: ["Phish-Guard AI Copilot"], forbid: ["Regarding your inquiry"] },
+                { q: "thank you so much", must: ["welcome"], forbid: ["Regarding your inquiry"] },
+                { q: "awesome got it", must: ["welcome"], forbid: ["Regarding your inquiry"] },
+                { q: "Explain how SPF, DKIM, and DMARC prevent spoofing", must: ["Email Authentication", "SPF", "DKIM", "DMARC"], forbid: ["Regarding your inquiry"] },
+                { q: "How does HTML Smuggling work?", must: ["HTML Smuggling", "Blob", "Base64"], forbid: ["Regarding your inquiry"] },
+                { q: "What are containment steps for AitM session token hijacking?", must: ["Immediate Containment", "Revoke-AzureADUserAllRefreshToken"], forbid: ["Regarding your inquiry"] },
+                { q: "How do IDN homograph and Punycode attacks trick victims?", must: ["IDN Homograph", "Punycode"], forbid: ["Regarding your inquiry"] },
+                { q: "Deconstruct psychological urgency triggers in phishing", must: ["Psychological Weaponization", "Cognitive Biases"], forbid: ["Regarding your inquiry"] },
+                { q: "Explain MITRE ATT&CK phishing techniques", must: ["MITRE ATT&CK", "T1566"], forbid: ["Regarding your inquiry"] },
+                { q: "Can you provide Sigma and KQL detection rules for phishing?", must: ["KQL", "Sigma"], forbid: ["Regarding your inquiry"] },
+                { q: "How does Quishing QR code phishing work?", must: ["Quishing", "QR Code"], forbid: ["Regarding your inquiry"] }
+            ];
+
+            const resultsDiv = document.getElementById('results');
+            let passCount = 0;
+
+            for (let i = 0; i < tests.length; i++) {
+                const t = tests[i];
+                const input = document.getElementById('copilotInput');
+                input.value = t.q;
+                document.getElementById('copilotChatFeed').innerHTML = '';
+                document.getElementById('btnCopilotSend').click();
+
+                await new Promise(r => setTimeout(r, 450));
+
+                const msgs = document.querySelectorAll('.copilot-msg-body');
+                const lastMsg = msgs.length > 1 ? msgs[msgs.length - 1] : (msgs[0] || null);
+                const text = lastMsg ? (lastMsg.textContent || lastMsg.innerText || '') : '';
+                
+                const passMust = t.must.every(m => text.toLowerCase().includes(m.toLowerCase()));
+                const passForbid = t.forbid.every(f => !text.toLowerCase().includes(f.toLowerCase()));
+                const ok = passMust && passForbid && text.length > 0;
+
+                if (ok) passCount++;
+
+                const el = document.createElement('div');
+                el.className = 'test-card';
+                el.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;">
+                        <span class="query-label">Test ${i+1}: "${t.q}"</span>
+                        <span class="${ok ? 'pass' : 'fail'}">${ok ? '✅ PASS' : '❌ FAIL'}</span>
+                    </div>
+                    <pre>${escapeHtml(text.slice(0, 240))}...</pre>
+                `;
+                resultsDiv.appendChild(el);
+
+                document.getElementById('summary').innerHTML = `<strong>Total Tests:</strong> ${tests.length} | <strong class="pass">Passed:</strong> ${passCount} | <strong class="${tests.length - passCount > 0 ? 'fail' : 'pass'}">Failed:</strong> ${tests.length - passCount}`;
+            }
+
+            function escapeHtml(s) {
+                return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+        });
+    </script>
+</body>
+</html>

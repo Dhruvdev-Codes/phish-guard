@@ -27,6 +27,17 @@
             <div class="logo">🛡️</div>
             <h1>Phish-Guard</h1>
             <p class="tagline">AI &amp; Cognitive Social Engineering Intelligence Platform</p>
+            <div class="header-search-bar">
+                <button type="button" id="btnGlobalSearchTrigger" class="btn-global-spotlight" title="Quick Search Intelligence &amp; Tools (Ctrl+K)">
+                    <span class="spotlight-icon">🔍</span>
+                    <span class="spotlight-text">Search threat vault, indicators, or tools…</span>
+                    <kbd class="spotlight-kbd">Ctrl+K</kbd>
+                </button>
+            </div>
+            <div class="header-auth-bar">
+                <span id="headerUserInfo" class="header-user-info hidden"></span>
+                <button type="button" id="authToggleBtn" class="btn-auth-toggle auth-logged-out" title="Click to sign in or register">🔐 Sign In</button>
+            </div>
         </header>
 
         <!-- ===== MODE NAVIGATION TABS ===== -->
@@ -58,6 +69,12 @@
             <button type="button" class="tab-btn" data-tab="copilotTab" id="tabCopilotBtn">
                 <span class="tab-icon">🤖</span> AI Cyber Copilot
             </button>
+            <button type="button" class="tab-btn" data-tab="databaseTab" id="tabDatabaseBtn">
+                <span class="tab-icon">🗄️</span> Threat Vault &amp; DB
+            </button>
+            <button type="button" class="tab-btn hidden" data-tab="devConsoleTab" id="tabDevConsoleBtn" style="display:none;">
+                <span class="tab-icon">🖥️</span> Developer Console
+            </button>
         </nav>
 
         <!-- ========================================================= -->
@@ -65,37 +82,56 @@
         <!-- ========================================================= -->
         <div id="analyzerTab" class="tab-content active">
 
-            <!-- ===== API KEYS (collapsible) ===== -->
-            <section class="card">
+            <!-- ===== AI & THREAT INTELLIGENCE SETTINGS (collapsible) ===== -->
+            <section class="card" id="aiSettingsCard">
                 <button id="keyToggle" class="key-toggle" aria-expanded="false">
-                    ⚙️ AI &amp; Threat Intelligence Engine <span class="badge-optional">Zero-Key Local Mode Ready</span> <span class="arrow">▼</span>
+                    ⚙️ AI Settings &amp; Threat Intelligence <span class="badge-optional">BYOK Multi-Model</span> <span class="arrow">▼</span>
                 </button>
                 <div id="keyPanel" class="key-panel collapsed">
                     <div class="key-row">
                         <div class="key-group">
-                            <label for="aiProvider">AI Engine Provider</label>
-                            <select id="aiProvider" class="select-input">
-                                <option value="gemini">Google Gemini 1.5 Flash (Free Tier Recommended)</option>
-                                <option value="openai">OpenAI (GPT-4o-mini)</option>
-                                <option value="heuristic">Built-in Heuristic Engine (Zero-Key Offline)</option>
+                            <label for="ai-provider">AI Provider</label>
+                            <select id="ai-provider" class="select-input">
+                                <option value="gemini">Google Gemini</option>
+                                <option value="openai">OpenAI (ChatGPT)</option>
+                                <option value="claude">Anthropic Claude</option>
+                                <option value="heuristic">Built-in Heuristic SOC Engine (Zero-Key Offline)</option>
                             </select>
-                            <small>Select your AI provider or use the offline heuristic analyzer.</small>
+                            <small>Select your cloud AI engine or offline analyzer.</small>
                         </div>
                         <div class="key-group">
-                            <label for="apiKeyInput" id="apiKeyLabel">Google Gemini API Key <span class="opt">(Free Tier)</span></label>
-                            <input type="password" id="apiKeyInput" placeholder="Enter Gemini or OpenAI API key..." autocomplete="off">
-                            <small id="apiKeyHint">Free key from Google AI Studio: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a></small>
+                            <label for="ai-model">Model Selection</label>
+                            <select id="ai-model" class="select-input">
+                                <option value="gemini-flash-latest">Gemini Flash (Auto-Updating Latest - Recommended)</option>
+                                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Fast &amp; Cheap)</option>
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Stable Fallback)</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+                                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                            </select>
+                            <small>Select the model version for threat analysis.</small>
                         </div>
                     </div>
                     <div class="key-row" style="margin-top: 12px;">
-                        <div class="key-group" style="grid-column: 1 / -1;">
-                            <label for="vtKey">VirusTotal API Key <span class="opt">(Optional - Real-time Threat Intelligence)</span></label>
+                        <div class="key-group">
+                            <label for="ai-api-key" id="apiKeyLabel">Google Gemini API Key <span class="opt">(Free Tier BYOK)</span></label>
+                            <input type="password" id="ai-api-key" placeholder="Enter Gemini or OpenAI API key..." autocomplete="off">
+                            <small id="apiKeyHint">Free key from Google AI Studio: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a></small>
+                        </div>
+                        <div class="key-group">
+                            <label for="vtKey">VirusTotal API Key <span class="opt">(Optional - Threat Intelligence)</span></label>
                             <input type="password" id="vtKey" placeholder="Enter VT key..." autocomplete="off">
                             <small>Enables global multi-engine URL reputation lookups.</small>
                         </div>
                     </div>
+
+                    <div class="key-actions-row">
+                        <button type="button" id="test-connection" class="btn-test-connection">🧪 Test Connection</button>
+                        <button type="button" id="save-settings" class="btn-save-settings">💾 Save Settings</button>
+                        <span id="connection-status" class="connection-status"></span>
+                    </div>
+
                     <div class="security-note">
-                        🔒 <strong>Privacy Guarantee:</strong> Keys remain strictly in volatile browser memory. They are never saved to disk, localStorage, cookies, or transmitted to any backend server.
+                        🔒 <strong>Privacy Guarantee:</strong> Stored only in your browser's local storage. Never sent anywhere except directly to the provider you selected.
                     </div>
                 </div>
             </section>
@@ -629,9 +665,10 @@
                             <p>Ask cybersecurity questions, investigate active session forensics, and get instant threat triage guidance.</p>
                         </div>
                     </div>
-                    <div class="copilot-engine-indicator">
+                    <div class="copilot-engine-indicator" id="copilotEngineIndicator" title="Click to configure AI Provider &amp; API Key">
                         <span class="pulse-dot"></span>
                         <span id="copilotEngineBadge">Engine: Auto-Detect (Gemini / OpenAI / Offline SOC)</span>
+                        <button type="button" class="btn-copilot-cfg" id="btnCopilotConfig" title="Configure AI Provider &amp; API Key">⚙️ Setup AI Key</button>
                     </div>
                 </div>
 
@@ -703,6 +740,88 @@
             </section>
         </div>
 
+        <!-- ========================================================= -->
+        <!-- TAB 9: FORENSIC THREAT VAULT & AUDIT DATABASE             -->
+        <!-- ========================================================= -->
+        <div id="databaseTab" class="tab-content">
+            <section class="card vault-hero-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>🗄️ Forensic Threat Vault &amp; Incident Database</h2>
+                        <p class="section-desc">Indexed, searchable SOC threat intelligence archive with persistence across browser sessions, STIX 2.1 JSON export, and single-click workbench reloaders.</p>
+                    </div>
+                    <div class="vault-hero-actions">
+                        <button type="button" id="btnVaultSeedArchive" class="btn-sample">🎲 Seed Intel Archive</button>
+                        <button type="button" id="btnVaultExportSTIX" class="btn-ioc-export">📦 Export STIX 2.1</button>
+                        <button type="button" id="btnVaultExportCSV" class="btn-ioc-export">📊 Export CSV</button>
+                        <button type="button" id="btnVaultExportBackup" class="btn-ioc-export">💾 Backup DB</button>
+                        <button type="button" id="btnVaultImportBackup" class="btn-ioc-export">📥 Import DB</button>
+                        <button type="button" id="btnVaultPurge" class="btn-link" style="color: var(--accent-red);">🗑️ Purge DB</button>
+                        <input type="file" id="vaultFileInput" accept=".json" style="display: none;">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Statistics Bar -->
+            <div id="vaultStatsDashboard" class="vault-stats-grid"></div>
+
+            <!-- Vault Search & Filter Bar -->
+            <section class="card vault-controls-card">
+                <div class="vault-filter-row">
+                    <div class="vault-pills-group">
+                        <button type="button" class="vault-filter-pill active" data-filter="all">All Dossiers</button>
+                        <button type="button" class="vault-filter-pill" data-filter="scan">Threat Scans</button>
+                        <button type="button" class="vault-filter-pill" data-filter="header">Email Headers</button>
+                        <button type="button" class="vault-filter-pill" data-filter="quishing">QR &amp; Links</button>
+                        <button type="button" class="vault-filter-pill" data-filter="radar">Typosquat</button>
+                        <button type="button" class="vault-filter-pill" data-filter="payload">Payloads</button>
+                        <button type="button" class="vault-filter-pill" data-filter="copilot">Copilot Briefings</button>
+                    </div>
+
+                    <div class="vault-selects-group">
+                        <select id="vaultVerdictFilter" class="select-input select-vault-filter">
+                            <option value="all">All Verdicts</option>
+                            <option value="MALICIOUS">Malicious Only</option>
+                            <option value="SUSPICIOUS">Suspicious Only</option>
+                            <option value="SAFE">Safe Only</option>
+                        </select>
+
+                        <select id="vaultSortSelect" class="select-input select-vault-filter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="risk-high">Highest Risk</option>
+                            <option value="risk-low">Lowest Risk</option>
+                            <option value="title-az">Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="vault-search-row">
+                    <div class="vault-search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="vaultSearchInput" class="vault-search-input" placeholder="Search by domain, IP, subject, MITRE tactic, threat actor, or keyword…">
+                    </div>
+                    <div id="vaultResultsCount" class="vault-results-badge">0 records found</div>
+                </div>
+            </section>
+
+            <!-- Records Grid -->
+            <div id="vaultRecordsGrid" class="vault-records-grid"></div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: DEVELOPER CONSOLE (Privileged - Hidden by Default)   -->
+        <!-- ========================================================= -->
+        <div id="devConsoleTab" class="tab-content">
+            <section class="card dev-console-card">
+                <h2 class="section-title">🖥️ Privileged Developer Console</h2>
+                <p class="section-subtitle">Engineering-level access to detection rule engine, domain blacklists, heuristic tuning, and audit telemetry. <strong>Developer role required.</strong></p>
+                <div id="devConsoleContent" class="dev-console-content">
+                    <p class="dev-placeholder">Loading Developer Console…</p>
+                </div>
+            </section>
+        </div>
+
         <footer class="footer">
             <p><strong>Phish-Guard</strong> — Cybersecurity &amp; AI Platform</p>
             <p>
@@ -718,10 +837,181 @@
         </footer>
     </div>
 
+    <!-- ===== AUTH MODAL OVERLAY ===== -->
+    <div id="authModal" class="auth-modal-overlay hidden">
+        <div class="auth-modal">
+            <button type="button" id="authModalClose" class="auth-modal-close" title="Close">&times;</button>
+            <div class="auth-modal-header">
+                <div class="auth-logo">🛡️</div>
+                <h2>Phish-Guard Authentication</h2>
+            </div>
+
+            <!-- Auth Tab Navigation -->
+            <nav class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" data-auth-tab="authLoginPane">🔑 Sign In</button>
+                <button type="button" class="auth-tab-btn" data-auth-tab="authRegisterPane">📝 Register</button>
+                <button type="button" class="auth-tab-btn auth-tab-dev" data-auth-tab="authDevPane">🖥️ Developer</button>
+                <button type="button" class="auth-tab-btn" data-auth-tab="authProfilePane">👤 Profile</button>
+            </nav>
+
+            <!-- Login Pane -->
+            <div id="authLoginPane" class="auth-tab-pane active">
+                <form id="authLoginForm" class="auth-form" autocomplete="off">
+                    <label class="auth-label">Email Address
+                        <input type="email" id="loginEmail" class="auth-input" placeholder="analyst@defense.local" required />
+                    </label>
+                    <label class="auth-label">Password
+                        <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••" required />
+                    </label>
+                    <div class="auth-error-msg hidden"></div>
+                    <div class="auth-success-msg hidden"></div>
+                    <button type="submit" class="btn-auth-submit">🔓 Sign In</button>
+                </form>
+                <p class="auth-hint">Demo: <code>analyst@defense.local</code> / <code>analyst123</code></p>
+            </div>
+
+            <!-- Register Pane -->
+            <div id="authRegisterPane" class="auth-tab-pane">
+                <form id="authRegisterForm" class="auth-form" autocomplete="off">
+                    <label class="auth-label">Full Name
+                        <input type="text" id="regName" class="auth-input" placeholder="Security Analyst Jane" required />
+                    </label>
+                    <label class="auth-label">Email Address
+                        <input type="email" id="regEmail" class="auth-input" placeholder="jane@corp.local" required />
+                    </label>
+                    <label class="auth-label">Password (min 6 chars)
+                        <input type="password" id="regPassword" class="auth-input" placeholder="••••••••" minlength="6" required />
+                    </label>
+                    <label class="auth-label">Organization
+                        <input type="text" id="regOrg" class="auth-input" placeholder="Enterprise SOC Team" />
+                    </label>
+                    <div class="auth-error-msg hidden"></div>
+                    <div class="auth-success-msg hidden"></div>
+                    <button type="submit" class="btn-auth-submit btn-auth-register">📝 Create Account</button>
+                </form>
+            </div>
+
+            <!-- Developer Portal Pane -->
+            <div id="authDevPane" class="auth-tab-pane">
+                <div class="dev-gate-header">
+                    <div class="dev-gate-icon">🖥️</div>
+                    <h3>Privileged Developer Gateway</h3>
+                    <p class="dev-gate-sub">Root-level access requires pre-authorized developer credentials &amp; role hierarchy clearance.</p>
+                </div>
+                <form id="authDevForm" class="auth-form dev-gate-form" autocomplete="off">
+                    <label class="auth-label dev-label">Developer Identifier (Email)
+                        <input type="text" id="devIdentifier" class="auth-input dev-input-terminal" placeholder="dhruv@phishguard.dev" required />
+                    </label>
+                    <label class="auth-label dev-label">Access Secret
+                        <input type="password" id="devSecret" class="auth-input dev-input-terminal" placeholder="••••••••••" required />
+                    </label>
+                    <div class="auth-error-msg hidden"></div>
+                    <div class="auth-success-msg hidden"></div>
+                    <button type="submit" class="btn-auth-submit btn-auth-dev">⚡ Authenticate Developer Identity</button>
+                </form>
+                <p class="auth-hint dev-hint">Dev: <code>dhruv@phishguard.dev</code> / <code>admin123</code></p>
+            </div>
+
+            <!-- Profile Pane -->
+            <div id="authProfilePane" class="auth-tab-pane">
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <h3 class="profile-name">—</h3>
+                    <p class="profile-email">—</p>
+                    <span class="profile-role role-badge">—</span>
+                    <p class="profile-org">—</p>
+                </div>
+                <button type="button" id="authLogoutBtn" class="btn-auth-submit btn-auth-logout">🚪 Sign Out</button>
+            </div>
+
+        </div><!-- /.auth-modal -->
+    </div><!-- /#authModal -->
+
+    <!-- ===== COPILOT API KEY SETUP MODAL ===== -->
+    <div id="copilotSetupModal" class="copilot-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="copilotModalTitle">
+        <div class="copilot-modal">
+            <button type="button" id="copilotModalClose" class="copilot-modal-close" title="Dismiss setup" aria-label="Close">&times;</button>
+            <div class="copilot-modal-header">
+                <div class="copilot-modal-icon">🤖</div>
+                <h2 id="copilotModalTitle">Set Up AI Cyber Copilot</h2>
+                <p class="copilot-modal-subtitle">Connect your AI provider API key for live neural threat reasoning, MITRE analysis, and interactive SOC guidance.</p>
+            </div>
+
+            <form id="copilotSetupForm" class="copilot-setup-form" onsubmit="return false;">
+                <!-- Provider Selection -->
+                <div class="copilot-form-group">
+                    <label for="copilotModalProvider" class="copilot-form-label">
+                        <span>AI Provider</span>
+                    </label>
+                    <select id="copilotModalProvider" class="copilot-form-select">
+                        <option value="gemini">Google Gemini (Recommended Free Tier)</option>
+                        <option value="openai">OpenAI (ChatGPT)</option>
+                        <option value="claude">Anthropic Claude</option>
+                    </select>
+                </div>
+
+                <!-- API Key Input -->
+                <div class="copilot-form-group">
+                    <label for="copilotModalApiKey" id="copilotModalKeyLabel" class="copilot-form-label">
+                        <span>Google Gemini API Key</span>
+                        <span class="copilot-badge-free">(Free Tier BYOK)</span>
+                    </label>
+                    <div class="copilot-input-key-wrapper">
+                        <input type="password" id="copilotModalApiKey" class="copilot-form-input" placeholder="AIzaSy..." autocomplete="off" />
+                        <button type="button" id="copilotModalKeyToggle" class="btn-copilot-key-toggle" title="Toggle visibility">👁️</button>
+                    </div>
+                    <div id="copilotModalKeyHint" class="copilot-form-hint">
+                        Get a free API key instantly at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+                    </div>
+                </div>
+
+                <!-- Model Selection -->
+                <div class="copilot-form-group">
+                    <label for="copilotModalModel" class="copilot-form-label">
+                        <span>Model Selection</span>
+                        <span class="copilot-badge-optional">(Optional)</span>
+                    </label>
+                    <select id="copilotModalModel" class="copilot-form-select">
+                        <option value="gemini-flash-latest">Gemini Flash (Auto-Updating Latest - Recommended)</option>
+                        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Fast &amp; Cheap)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Stable Fallback)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                    </select>
+                </div>
+
+                <!-- Privacy Guarantee Note -->
+                <div class="copilot-privacy-callout">
+                    <div class="copilot-privacy-icon">🔒</div>
+                    <div class="copilot-privacy-text">
+                        Your key is stored only in your browser's local storage and is sent directly to the provider you choose — never to any other server.
+                    </div>
+                </div>
+
+                <div id="copilotModalError" class="copilot-modal-error hidden"></div>
+
+                <!-- Actions -->
+                <div class="copilot-modal-actions">
+                    <button type="button" id="copilotModalSaveBtn" class="btn-copilot-modal-save">
+                        ⚡ Save &amp; Continue
+                    </button>
+                    <button type="button" id="copilotModalSkipBtn" class="btn-copilot-modal-skip">
+                        Skip / Use offline mode →
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="cyber-bg.js"></script>
+    <script src="ai-settings.js"></script>
+    <script src="ai-providers.js"></script>
+    <script src="ai-analyzer.js"></script>
     <script src="ioc-studio.js"></script>
     <script src="playbooks.js"></script>
     <script src="copilot.js"></script>
+    <script src="db.js"></script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
